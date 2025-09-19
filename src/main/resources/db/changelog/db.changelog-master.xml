@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Schema is created by PostgreSQL init.sql -->
+    <include file="db/changelog/00002-create-tenants-table.xml"/>
+    <include file="db/changelog/00003-create-invoices-table.xml"/>
+    <include file="db/changelog/00004-create-invoice-line-items-table.xml"/>
+    <include file="db/changelog/00005-create-mcp-audit-log-table.xml"/>
+    <include file="db/changelog/00006-create-client-authorization-tables.xml"/>
+    <include file="db/changelog/00007-create-indexes.xml"/>
+    <include file="db/changelog/00008-insert-default-data.xml"/>
+    <include file="db/changelog/00009-insert-default-client-authorization.xml"/>
+
+</databaseChangeLog>

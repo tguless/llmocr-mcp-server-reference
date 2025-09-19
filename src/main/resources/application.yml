@@ -1,0 +1,100 @@
+server:
+  port: ${SERVER_PORT:8081}
+  servlet:
+    context-path: /mcp-invoice
+
+spring:
+  application:
+    name: mcp-invoice-server
+  
+  datasource:
+    url: jdbc:postgresql://localhost:15432/llm_ocr_db
+    username: ${DB_USERNAME:mcp_invoice_user}
+    password: ${DB_PASSWORD:mcp_invoice_password}
+    driver-class-name: org.postgresql.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Back to validate since you're running in IntelliJ
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        default_schema: mcp_invoice
+    
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    # Configure Liquibase to use the mcp_invoice schema exclusively
+    liquibase-schema: mcp_invoice
+    default-schema: mcp_invoice
+
+  ai:
+    mcp:
+      server:
+        enabled: true
+        protocol: STATELESS  # Enable stateless server as per documentation
+        name: invoice-processing-server
+        version: 1.0.0
+        instructions: "Multi-tenant invoice processing server optimized for cloud deployments"
+        type: SYNC
+        tool-callback-converter: true  # Enable Spring AI ToolCallback conversion
+        capabilities:
+          tool: true
+          resource: true
+          prompt: false
+          completion: false
+        stateless:
+          mcp-endpoint: /mcp  # Custom MCP endpoint
+          disallow-delete: false
+        request-timeout: 30s
+
+# All JWT validation and client authorization now managed via database and MCP server frontend
+# No static configuration needed - everything is dynamic and UI-configurable
+
+# Multi-tenant Configuration
+multitenancy:
+  enabled: true
+  default-tenant: default
+  tenant-header: X-Tenant-ID
+  tenant-claim: tenant_id
+
+# Security Configuration
+security:
+  mcp:
+    enabled: true
+    require-authentication: true
+    allowed-clients: ${MCP_ALLOWED_CLIENTS:llm-ocr-main}
+
+# Logging
+logging:
+  level:
+    com.llmocr.mcp.invoice: DEBUG
+    org.springframework.security: INFO
+    liquibase: INFO
+    org.springframework.ai.mcp: DEBUG
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,mcp
+  endpoint:
+    health:
+      show-details: always
+    mcp:
+      enabled: true
+
+# Invoice Processing Configuration
+invoice:
+  processing:
+    max-file-size: 10MB
+    supported-formats: pdf,png,jpg,jpeg
+    duplicate-check:
+      enabled: true
+      fields: invoiceNumber,vendorName,totalAmount
+    validation:
+      required-fields: invoiceNumber,vendorName,totalAmount,invoiceDate
+      amount-precision: 2

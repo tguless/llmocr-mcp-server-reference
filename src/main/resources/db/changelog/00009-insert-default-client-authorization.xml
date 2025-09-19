@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00009-insert-default-client-authorization" author="mcp-invoice-server">
+        <!-- Only run if admin tenant client doesn't exist -->
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sqlCheck expectedResult="1">SELECT COUNT(*) FROM mcp_invoice.authorized_clients WHERE tenant_id = 'admin' AND client_id = 'llm-ocr-main'</sqlCheck>
+            </not>
+        </preConditions>
+        
+        <comment>Insert default client authorization for admin tenant</comment>
+        
+        <!-- Register the main LLM-OCR client for admin tenant -->
+        <insert tableName="authorized_clients" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="client_id" value="llm-ocr-main"/>
+            <column name="client_name" value="LLM-OCR Main Application"/>
+            <column name="description" value="Main LLM-OCR application with full invoice processing access"/>
+            <column name="trusted_issuer" value="http://localhost:8080/api"/>
+            <column name="introspection_endpoint" value="http://localhost:8080/api/jwt/validate"/>
+            <column name="jwks_endpoint" value="http://localhost:8080/api/jwt/.well-known/jwks.json"/>
+            <column name="token_endpoint" value="http://localhost:8080/api/auth/login"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_by" value="system"/>
+        </insert>
+        
+        <!-- Register the background processing client for admin tenant -->
+        <insert tableName="authorized_clients" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="client_id" value="llm-ocr-background"/>
+            <column name="client_name" value="LLM-OCR Background Processing"/>
+            <column name="description" value="Background PDF processing with limited invoice access"/>
+            <column name="trusted_issuer" value="http://localhost:8080/api"/>
+            <column name="introspection_endpoint" value="http://localhost:8080/api/jwt/validate"/>
+            <column name="jwks_endpoint" value="http://localhost:8080/api/jwt/.well-known/jwks.json"/>
+            <column name="token_endpoint" value="http://localhost:8080/api/auth/login"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_by" value="system"/>
+        </insert>
+        
+        <!-- Add generic scopes for main client (server-agnostic) -->
+        <insert tableName="client_scopes" schemaName="mcp_invoice">
+            <column name="authorized_client_id" valueComputed="(SELECT id FROM mcp_invoice.authorized_clients WHERE tenant_id='admin' AND client_id='llm-ocr-main')"/>
+            <column name="scope" value="read:*"/>
+            <column name="description" value="Read access to all server resources"/>
+            <column name="is_active" valueBoolean="true"/>
+        </insert>
+        
+        <insert tableName="client_scopes" schemaName="mcp_invoice">
+            <column name="authorized_client_id" valueComputed="(SELECT id FROM mcp_invoice.authorized_clients WHERE tenant_id='admin' AND client_id='llm-ocr-main')"/>
+            <column name="scope" value="write:*"/>
+            <column name="description" value="Write access to all server resources"/>
+            <column name="is_active" valueBoolean="true"/>
+        </insert>
+        
+        <insert tableName="client_scopes" schemaName="mcp_invoice">
+            <column name="authorized_client_id" valueComputed="(SELECT id FROM mcp_invoice.authorized_clients WHERE tenant_id='admin' AND client_id='llm-ocr-main')"/>
+            <column name="scope" value="admin:*"/>
+            <column name="description" value="Administrative access to all server functions"/>
+            <column name="is_active" valueBoolean="true"/>
+        </insert>
+        
+        <!-- Add limited scopes for background client -->
+        <insert tableName="client_scopes" schemaName="mcp_invoice">
+            <column name="authorized_client_id" valueComputed="(SELECT id FROM mcp_invoice.authorized_clients WHERE tenant_id='admin' AND client_id='llm-ocr-background')"/>
+            <column name="scope" value="read:*"/>
+            <column name="description" value="Read access to server resources"/>
+            <column name="is_active" valueBoolean="true"/>
+        </insert>
+        
+        <insert tableName="client_scopes" schemaName="mcp_invoice">
+            <column name="authorized_client_id" valueComputed="(SELECT id FROM mcp_invoice.authorized_clients WHERE tenant_id='admin' AND client_id='llm-ocr-background')"/>
+            <column name="scope" value="write:*"/>
+            <column name="description" value="Write access to server resources"/>
+            <column name="is_active" valueBoolean="true"/>
+        </insert>
+
+    </changeSet>
+</databaseChangeLog>

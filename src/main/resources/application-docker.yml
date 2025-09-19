@@ -1,0 +1,75 @@
+# Docker-specific configuration for MCP Invoice Server
+server:
+  port: 8081
+  servlet:
+    context-path: /mcp-invoice
+
+spring:
+  application:
+    name: mcp-invoice-server
+  
+  datasource:
+    # Use Docker service name and internal port
+    url: jdbc:postgresql://postgres:5432/llm_ocr_db
+    username: ${DB_USERNAME:mcp_invoice_user}
+    password: ${DB_PASSWORD:mcp_invoice_password}
+    driver-class-name: org.postgresql.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        default_schema: mcp_invoice
+    
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    liquibase-schema: mcp_invoice
+    default-schema: mcp_invoice
+
+  ai:
+    mcp:
+      server:
+        enabled: true
+        protocol: STATELESS
+        name: invoice-processing-server
+        version: 1.0.0
+        instructions: "Multi-tenant invoice processing server for Docker deployment"
+        type: SYNC
+        tool-callback-converter: true
+        capabilities:
+          tool: true
+          resource: true
+          prompt: false
+          completion: false
+        stateless:
+          mcp-endpoint: /mcp
+          disallow-delete: false
+        request-timeout: 30s
+
+# All JWT validation and client authorization managed via database
+# No static configuration needed - everything is dynamic
+
+# Multi-tenant Configuration
+multitenancy:
+  enabled: true
+  default-tenant: default
+  tenant-header: X-Tenant-ID
+  tenant-claim: tenant_id
+
+# Security Configuration
+security:
+  mcp:
+    enabled: true
+    require-authentication: true
+
+# Logging
+logging:
+  level:
+    com.llmocr.mcp.invoice: INFO
+    org.springframework.security: WARN
+    liquibase: INFO

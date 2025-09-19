@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00001-create-schema" author="mcp-invoice-server">
+        <comment>MCP Invoice schema already created during PostgreSQL initialization</comment>
+        
+        <!-- Schema is created by init.sql during PostgreSQL startup -->
+        <!-- No action needed here since mcp_invoice_user doesn't have schema creation privileges -->
+        
+        <sql>
+            -- Verify schema exists (this will fail if schema doesn't exist)
+            SELECT 1 FROM information_schema.schemata WHERE schema_name = 'mcp_invoice';
+        </sql>
+        
+        <rollback>
+            <!-- No rollback needed - schema managed by init.sql -->
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

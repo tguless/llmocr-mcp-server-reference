@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00007-create-indexes" author="mcp-invoice-server">
+        <!-- Only run if indexes don't already exist -->
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="invoices" schemaName="mcp_invoice" indexName="idx_invoices_tenant_id"/>
+            </not>
+        </preConditions>
+        
+        <comment>Create indexes for performance optimization</comment>
+        
+        <!-- Invoices table indexes -->
+        <createIndex tableName="invoices" schemaName="mcp_invoice" indexName="idx_invoices_tenant_id">
+            <column name="tenant_id"/>
+        </createIndex>
+        
+        <createIndex tableName="invoices" schemaName="mcp_invoice" indexName="idx_invoices_vendor_name">
+            <column name="vendor_name"/>
+        </createIndex>
+        
+        <createIndex tableName="invoices" schemaName="mcp_invoice" indexName="idx_invoices_invoice_date">
+            <column name="invoice_date"/>
+        </createIndex>
+        
+        <createIndex tableName="invoices" schemaName="mcp_invoice" indexName="idx_invoices_status">
+            <column name="status"/>
+        </createIndex>
+        
+        <createIndex tableName="invoices" schemaName="mcp_invoice" indexName="idx_invoices_processing_status">
+            <column name="processing_status"/>
+        </createIndex>
+        
+        <createIndex tableName="invoices" schemaName="mcp_invoice" indexName="idx_invoices_created_at">
+            <column name="created_at"/>
+        </createIndex>
+
+        <!-- Composite index for duplicate detection -->
+        <createIndex tableName="invoices" schemaName="mcp_invoice" indexName="idx_invoices_duplicate_check">
+            <column name="tenant_id"/>
+            <column name="vendor_name"/>
+            <column name="total_amount"/>
+            <column name="invoice_date"/>
+        </createIndex>
+
+        <!-- Invoice line items indexes -->
+        <createIndex tableName="invoice_line_items" schemaName="mcp_invoice" indexName="idx_invoice_line_items_invoice_id">
+            <column name="invoice_id"/>
+        </createIndex>
+
+        <!-- MCP audit log indexes -->
+        <createIndex tableName="mcp_audit_log" schemaName="mcp_invoice" indexName="idx_mcp_audit_log_tenant_id">
+            <column name="tenant_id"/>
+        </createIndex>
+        
+        <createIndex tableName="mcp_audit_log" schemaName="mcp_invoice" indexName="idx_mcp_audit_log_operation_type">
+            <column name="operation_type"/>
+        </createIndex>
+        
+        <createIndex tableName="mcp_audit_log" schemaName="mcp_invoice" indexName="idx_mcp_audit_log_created_at">
+            <column name="created_at"/>
+        </createIndex>
+        
+        <createIndex tableName="mcp_audit_log" schemaName="mcp_invoice" indexName="idx_mcp_audit_log_client_id">
+            <column name="client_id"/>
+        </createIndex>
+
+        <!-- Tenants table indexes -->
+        <createIndex tableName="tenants" schemaName="mcp_invoice" indexName="idx_tenants_active">
+            <column name="active"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
