@@ -2,11 +2,12 @@ package com.llmocr.mcp.invoice.service;
 
 import com.llmocr.mcp.invoice.domain.McpAuditLog;
 import com.llmocr.mcp.invoice.repository.McpAuditLogRepository;
-import com.llmocr.mcp.invoice.security.TenantContext;
+import com.llmocr.mcp.invoice.security.McpSecurityContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 // Removed MCP annotation dependency - using REST controller approach
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -25,12 +26,12 @@ public class McpAuditService {
 
     private final McpAuditLogRepository auditLogRepository;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logOperation(String operationType, String toolName, boolean success, String message, long startTime) {
         try {
-            String tenantId = TenantContext.getCurrentTenantId();
-            String userId = TenantContext.getUserId();
-            String clientId = TenantContext.getClientId();
+            String tenantId = McpSecurityContext.getCurrentTenantId();
+            String userId = McpSecurityContext.getCurrentUserId();
+            String clientId = McpSecurityContext.getCurrentClientId();
             
             long executionTime = System.currentTimeMillis() - startTime;
 
@@ -43,6 +44,8 @@ public class McpAuditService {
                     .errorMessage(success ? null : message)
                     .executionTimeMs(executionTime)
                     .createdBy(userId)
+                    .ipAddress(McpSecurityContext.getClientIpAddress())
+                    .userAgent("MCP-Server/1.0")  // Default user agent for MCP server operations
                     .build();
 
             auditLogRepository.save(auditLog);
@@ -60,7 +63,7 @@ public class McpAuditService {
     @Transactional(readOnly = true)
     public String getAuditLogs(int page, int size) {
         long startTime = System.currentTimeMillis();
-        String tenantId = TenantContext.getCurrentTenantId();
+        String tenantId = McpSecurityContext.getCurrentTenantId();
         
         try {
             log.debug("Getting audit logs for tenant {}", tenantId);
@@ -93,7 +96,7 @@ public class McpAuditService {
     @Transactional(readOnly = true)
     public String getOperationStatistics() {
         long startTime = System.currentTimeMillis();
-        String tenantId = TenantContext.getCurrentTenantId();
+        String tenantId = McpSecurityContext.getCurrentTenantId();
         
         try {
             log.debug("Getting operation statistics for tenant {}", tenantId);

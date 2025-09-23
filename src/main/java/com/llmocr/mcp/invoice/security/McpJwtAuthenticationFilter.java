@@ -58,8 +58,8 @@ public class McpJwtAuthenticationFilter extends OncePerRequestFilter {
             JwtIntrospectionService.TokenValidationResult validation = 
                     jwtIntrospectionService.validateToken(token);
             
-            log.debug("Token validation result: valid={}, userId={}, tenantId={}, email={}", 
-                     validation.isValid(), validation.getUserId(), validation.getTenantId(), validation.getEmail());
+            log.debug("Token validation result: valid={}, userId={}, tenantId={}, email={}, clientId={}", 
+                     validation.isValid(), validation.getUserId(), validation.getTenantId(), validation.getEmail(), validation.getClientId());
             
             if (!validation.isValid()) {
                 log.debug("Invalid JWT token for MCP request: {} - {}", requestUri, validation.getError());
@@ -85,6 +85,7 @@ public class McpJwtAuthenticationFilter extends OncePerRequestFilter {
             request.setAttribute("mcpUserId", validation.getUserId());
             request.setAttribute("mcpUserEmail", validation.getEmail());
             request.setAttribute("mcpUserToken", token);
+            request.setAttribute("mcpClientId", validation.getClientId());
 
             log.debug("MCP request authenticated for tenant: {}, user: {}", 
                     validation.getTenantId(), validation.getUserId());

@@ -53,13 +53,38 @@ public class JwtIntrospectionService {
 
             HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
 
-            // Use client's introspection endpoint from database
-            // For now, use a default endpoint - will be enhanced with per-client lookup
-            String defaultIntrospectionEndpoint = "http://localhost:8080/api/jwt/validate";
+            // Try to extract tenant and client info from token for database lookup
+            // This enables per-tenant introspection endpoints while maintaining backward compatibility
+            String tenantId = extractTenantIdFromToken(token);
+            String clientId = extractClientIdFromToken(token);
+            
+            String introspectionEndpoint;
+            AuthorizedClient authorizedClient = null;
+            
+            if (tenantId != null && clientId != null) {
+                // New flow: Use client-specific introspection endpoint from database
+                authorizedClient = getAuthorizedClient(tenantId, clientId);
+                if (authorizedClient != null && authorizedClient.getIntrospectionEndpoint() != null && 
+                    !authorizedClient.getIntrospectionEndpoint().trim().isEmpty()) {
+                    introspectionEndpoint = authorizedClient.getIntrospectionEndpoint();
+                    log.debug("Using client-specific introspection endpoint for client '{}' (tenant '{}'): {}", 
+                             clientId, tenantId, introspectionEndpoint);
+                } else {
+                    // Fallback to default endpoint for backward compatibility
+                    introspectionEndpoint = "http://localhost:8080/api/jwt/validate";
+                    log.debug("Client '{}' for tenant '{}' not found or no endpoint configured, using default: {}", 
+                             clientId, tenantId, introspectionEndpoint);
+                }
+            } else {
+                // Legacy flow: Use default introspection endpoint for backward compatibility
+                introspectionEndpoint = "http://localhost:8080/api/jwt/validate";
+                log.debug("Token missing tenant_id or client_id claims, using default introspection endpoint: {}", 
+                         introspectionEndpoint);
+            }
             
             // Call introspection endpoint
             ResponseEntity<Map> response = restTemplate.postForEntity(
-                    defaultIntrospectionEndpoint, request, Map.class);
+                    introspectionEndpoint, request, Map.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> body = response.getBody();
@@ -70,33 +95,32 @@ public class JwtIntrospectionService {
                 if (Boolean.TRUE.equals(active)) {
                     String userId = (String) body.get("sub");
                     String email = (String) body.get("email");
-                    String tenantId = (String) body.get("tenant_id");
                     String issuer = (String) body.get("iss");
                     
                     log.debug("Extracted from token - userId: {}, email: {}, tenantId: {}, issuer: {}", 
                              userId, email, tenantId, issuer);
                     
-                    // Validate audience and client access first to get client info
+                    // Validate audience and client access
                     String audience = (String) body.get("aud");
-                    String clientId = (String) body.get("client_id");
                     
-                    // Get client-specific configuration from database
-                    AuthorizedClient authorizedClient = getAuthorizedClient(tenantId, clientId);
-                    if (authorizedClient == null) {
-                        log.warn("Client '{}' not registered for tenant '{}' - access denied", clientId, tenantId);
-                        return TokenValidationResult.invalid("Client not registered for this tenant");
+                    // Validate issuer against client-specific trusted issuer (if we have client config)
+                    if (authorizedClient != null) {
+                        if (!issuer.equals(authorizedClient.getTrustedIssuer())) {
+                            log.warn("Token from untrusted issuer for client '{}'. Expected: {}, got: {}", 
+                                    clientId, authorizedClient.getTrustedIssuer(), issuer);
+                            return TokenValidationResult.invalid("Token from untrusted issuer for this client");
+                        }
+                    } else {
+                        log.debug("No client configuration found, skipping issuer validation for backward compatibility");
                     }
                     
-                    // Validate issuer against client-specific trusted issuer
-                    if (!issuer.equals(authorizedClient.getTrustedIssuer())) {
-                        log.warn("Token from untrusted issuer for client '{}'. Expected: {}, got: {}", 
-                                clientId, authorizedClient.getTrustedIssuer(), issuer);
-                        return TokenValidationResult.invalid("Token from untrusted issuer for this client");
-                    }
-                    
-                    // Validate audience and final client access
-                    if (!validateClientAccess(audience, clientId, tenantId)) {
-                        return TokenValidationResult.invalid("Client not authorized for this server");
+                    // Validate audience and final client access (only if we have client info)
+                    if (tenantId != null && clientId != null) {
+                        if (!validateClientAccess(audience, clientId, tenantId)) {
+                            return TokenValidationResult.invalid("Client not authorized for this server");
+                        }
+                    } else {
+                        log.debug("Token missing tenant/client claims, skipping client access validation for backward compatibility");
                     }
                     
                     return TokenValidationResult.builder()
@@ -104,6 +128,7 @@ public class JwtIntrospectionService {
                             .userId(userId)
                             .email(email)
                             .tenantId(tenantId)
+                            .clientId(clientId)
                             .expiration(((Number) body.get("exp")).longValue())
                             .issuedAt(((Number) body.get("iat")).longValue())
                             .build();
@@ -133,6 +158,7 @@ public class JwtIntrospectionService {
         private String userId;
         private String email;
         private String tenantId;
+        private String clientId;
         private Long expiration;
         private Long issuedAt;
         private String error;
@@ -193,5 +219,73 @@ public class JwtIntrospectionService {
         return authorizedClientRepository
                 .findByTenantIdAndClientIdAndIsActiveTrue(tenantId, clientId)
                 .orElse(null);
+    }
+    
+    /**
+     * Extract tenant_id from JWT token without validation
+     * This is used to determine which introspection endpoint to use
+     * Handles both "tenantId" (camelCase) and "tenant_id" (snake_case) for backward compatibility
+     */
+    private String extractTenantIdFromToken(String token) {
+        try {
+            // Decode JWT payload without verification (we'll validate via introspection)
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                return null;
+            }
+            
+            String payload = parts[1];
+            // Add padding if needed
+            while (payload.length() % 4 != 0) {
+                payload += "=";
+            }
+            
+            byte[] decodedBytes = java.util.Base64.getUrlDecoder().decode(payload);
+            String payloadJson = new String(decodedBytes);
+            
+            Map<String, Object> claims = objectMapper.readValue(payloadJson, Map.class);
+            
+            // Try both formats for backward compatibility
+            String tenantId = (String) claims.get("tenant_id");  // snake_case (preferred)
+            if (tenantId == null) {
+                tenantId = (String) claims.get("tenantId");      // camelCase (legacy)
+            }
+            
+            return tenantId;
+            
+        } catch (Exception e) {
+            log.debug("Failed to extract tenant_id from token: {}", e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Extract client_id from JWT token without validation
+     * This is used to determine which introspection endpoint to use
+     */
+    private String extractClientIdFromToken(String token) {
+        try {
+            // Decode JWT payload without verification (we'll validate via introspection)
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                return null;
+            }
+            
+            String payload = parts[1];
+            // Add padding if needed
+            while (payload.length() % 4 != 0) {
+                payload += "=";
+            }
+            
+            byte[] decodedBytes = java.util.Base64.getUrlDecoder().decode(payload);
+            String payloadJson = new String(decodedBytes);
+            
+            Map<String, Object> claims = objectMapper.readValue(payloadJson, Map.class);
+            return (String) claims.get("client_id");
+            
+        } catch (Exception e) {
+            log.debug("Failed to extract client_id from token: {}", e.getMessage());
+            return null;
+        }
     }
 }
