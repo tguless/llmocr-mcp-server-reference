@@ -175,17 +175,6 @@ public class JwtIntrospectionService {
      * Validate client access based on audience, client ID, and tenant-specific authorization
      */
     private boolean validateClientAccess(String audience, String clientId, String tenantId) {
-        // Check audience claim (OAuth 2.1 compliance)
-        // Audience must match this server's URL for proper security
-        String expectedAudience = "http://localhost:" + serverPort + contextPath;
-        
-        if (audience == null || !audience.equals(expectedAudience)) {
-            log.warn("SECURITY: Token audience mismatch. Expected: {}, got: {}", expectedAudience, audience);
-            return false;
-        }
-        
-        log.debug("SECURITY: Token audience validated: {}", audience);
-        
         // CRITICAL: Check client authorization in database (tenant-specific)
         // NO automatic access - clients must be explicitly registered per tenant
         if (clientId == null || tenantId == null) {
@@ -193,14 +182,45 @@ public class JwtIntrospectionService {
             return false;
         }
         
-        boolean isAuthorized = authorizedClientRepository
-                .findByTenantIdAndClientIdAndIsActiveTrue(tenantId, clientId)
-                .isPresent();
+        // Get authorized client from database
+        var authorizedClientOpt = authorizedClientRepository
+                .findByTenantIdAndClientIdAndIsActiveTrue(tenantId, clientId);
         
-        if (!isAuthorized) {
-            log.warn("SECURITY: Client '{}' NOT authorized for tenant '{}' on this MCP server - access denied", 
-                    clientId, tenantId);
+        if (authorizedClientOpt.isEmpty()) {
+            log.warn("SECURITY: Client '{}' not authorized for tenant '{}' on this MCP server", clientId, tenantId);
             return false;
+        }
+        
+        var authorizedClient = authorizedClientOpt.get();
+        
+        // Check audience claim (OAuth 2.1 compliance)
+        // Audience must match the expected audience URL from the database
+        String expectedAudience = authorizedClient.getAudienceUrl();
+        
+        // If no audience URL is configured in database, fall back to server URL
+        if (expectedAudience == null || expectedAudience.trim().isEmpty()) {
+            // Support both localhost and Docker service name for backward compatibility
+            String localhostAudience = "http://localhost:" + serverPort + contextPath;
+            String dockerAudience = "http://mcp-invoice-server:" + serverPort + contextPath;
+            
+            boolean audienceValid = audience != null && 
+                    (audience.equals(localhostAudience) || audience.equals(dockerAudience));
+            
+            if (!audienceValid) {
+                log.warn("SECURITY: Token audience mismatch (fallback validation). Expected: {} or {}, got: {}", 
+                        localhostAudience, dockerAudience, audience);
+                return false;
+            }
+            
+            log.debug("SECURITY: Token audience validated using fallback: {}", audience);
+        } else {
+            // Use configured audience URL from database
+            if (audience == null || !audience.equals(expectedAudience)) {
+                log.warn("SECURITY: Token audience mismatch. Expected: {}, got: {}", expectedAudience, audience);
+                return false;
+            }
+            
+            log.debug("SECURITY: Token audience validated against database configuration: {}", audience);
         }
         
         log.debug("SECURITY: Client '{}' authorized for tenant '{}' on this MCP server", clientId, tenantId);

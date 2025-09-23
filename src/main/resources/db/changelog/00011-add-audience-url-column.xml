@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00011-add-audience-url-column" author="mcp-invoice-server">
+        <comment>Add audience_url column to authorized_clients table for JWT audience validation</comment>
+        
+        <!-- Add audience_url column -->
+        <addColumn tableName="authorized_clients" schemaName="mcp_invoice">
+            <column name="audience_url" type="VARCHAR(500)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- Add comment explaining the audience_url field -->
+        <setColumnRemarks tableName="authorized_clients" columnName="audience_url" schemaName="mcp_invoice"
+                         remarks="Expected audience URL for JWT tokens targeting this MCP server. Must match the aud claim in JWT tokens. If null, falls back to server URL validation."/>
+    </changeSet>
+
+</databaseChangeLog>

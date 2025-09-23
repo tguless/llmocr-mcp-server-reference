@@ -14,5 +14,6 @@
     <include file="db/changelog/00007-create-indexes.xml"/>
     <include file="db/changelog/00008-insert-default-data.xml"/>
     <include file="db/changelog/00009-insert-default-client-authorization.xml"/>
+    <include file="db/changelog/00011-add-audience-url-column.xml"/>
 
 </databaseChangeLog>

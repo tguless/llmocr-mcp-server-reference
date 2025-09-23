@@ -46,6 +46,9 @@ public class AuthorizedClient {
     @Column(name = "token_endpoint", length = 500)
     private String tokenEndpoint;
 
+    @Column(name = "audience_url", length = 500)
+    private String audienceUrl;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
