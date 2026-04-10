@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00040-create-tenant-settings-table" author="mcp-invoice-server">
+        <comment>Create tenant_settings table for storing tenant-level configuration like LLMOCR API keys</comment>
+        
+        <createTable tableName="tenant_settings" schemaName="mcp_invoice">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_tenant_settings_tenant_id"/>
+            </column>
+            <column name="llmocr_api_key" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="llmocr_api_key_masked" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="updated_by" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        
+        <createIndex tableName="tenant_settings" indexName="idx_tenant_settings_tenant_id" schemaName="mcp_invoice">
+            <column name="tenant_id"/>
+        </createIndex>
+        
+        <rollback>
+            <dropTable tableName="tenant_settings" schemaName="mcp_invoice"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
+

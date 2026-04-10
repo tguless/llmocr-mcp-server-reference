@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Fix unit_price column precision to support 4 decimal places for energy rates -->
+    <changeSet id="00025-fix-unit-price-precision" author="llmocr">
+        <comment>Increase unit_price precision from scale=2 to scale=4 to support energy rates with 4 decimal places (e.g., 0.1923)</comment>
+        
+        <!-- Modify the column to increase decimal precision -->
+        <modifyDataType
+                schemaName="mcp_invoice"
+                tableName="invoice_line_items"
+                columnName="unit_price"
+                newDataType="NUMERIC(15, 4)"/>
+        
+        <rollback>
+            <modifyDataType
+                    schemaName="mcp_invoice"
+                    tableName="invoice_line_items"
+                    columnName="unit_price"
+                    newDataType="NUMERIC(15, 2)"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

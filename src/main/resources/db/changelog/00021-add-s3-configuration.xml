@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Create S3 Bucket Configuration Table -->
+    <changeSet id="00021-create-s3-bucket-configurations-table" author="admin">
+        <createTable tableName="s3_bucket_configurations" schemaName="mcp_invoice">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" primaryKeyName="pk_s3_bucket_configurations"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bucket_name" type="VARCHAR(63)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="endpoint" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="access_key_id" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="secret_access_key" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="region" type="VARCHAR(50)"/>
+            <column name="is_active" type="BOOLEAN" defaultValue="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+        </createTable>
+
+        <!-- Add unique constraint: one bucket per tenant -->
+        <addUniqueConstraint
+                tableName="s3_bucket_configurations"
+                columnNames="tenant_id, bucket_name"
+                constraintName="uk_s3_bucket_per_tenant"
+                schemaName="mcp_invoice"/>
+
+        <!-- Add index for tenant lookups -->
+        <createIndex
+                indexName="idx_s3_config_tenant"
+                tableName="s3_bucket_configurations"
+                schemaName="mcp_invoice">
+            <column name="tenant_id"/>
+            <column name="is_active"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Add S3 Location Fields to Invoices Table -->
+    <changeSet id="00021-add-s3-fields-to-invoices" author="admin">
+        <addColumn tableName="invoices" schemaName="mcp_invoice">
+            <column name="s3_bucket_name" type="VARCHAR(63)"/>
+            <column name="s3_object_key" type="TEXT"/>
+        </addColumn>
+
+        <!-- Add index for S3 lookups -->
+        <createIndex
+                indexName="idx_invoice_s3_bucket"
+                tableName="invoices"
+                schemaName="mcp_invoice">
+            <column name="s3_bucket_name"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

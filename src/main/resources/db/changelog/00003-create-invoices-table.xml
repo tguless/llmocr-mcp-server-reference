@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00003-create-invoices-table" author="mcp-invoice-server">
+        <comment>Create invoices table with multi-tenant support</comment>
+        
+        <createTable tableName="invoices" schemaName="mcp_invoice">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="invoice_number" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vendor_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vendor_address" type="TEXT"/>
+            <column name="vendor_tax_id" type="VARCHAR(50)"/>
+            <column name="customer_name" type="VARCHAR(255)"/>
+            <column name="customer_address" type="TEXT"/>
+            <column name="invoice_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="due_date" type="DATE"/>
+            <column name="subtotal_amount" type="DECIMAL(15,2)"/>
+            <column name="tax_amount" type="DECIMAL(15,2)"/>
+            <column name="total_amount" type="DECIMAL(15,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(3)" defaultValue="USD">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payment_terms" type="VARCHAR(100)"/>
+            <column name="description" type="TEXT"/>
+            <column name="status" type="VARCHAR(50)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processing_status" type="VARCHAR(50)" defaultValue="NEW">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_file_path" type="VARCHAR(500)"/>
+            <column name="source_file_name" type="VARCHAR(255)"/>
+            <column name="source_file_type" type="VARCHAR(50)"/>
+            <column name="extracted_text" type="TEXT"/>
+            <column name="confidence_score" type="DECIMAL(5,4)"/>
+            <column name="validation_errors" type="JSONB"/>
+            <column name="metadata" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+        </createTable>
+
+        <!-- Composite unique constraint for tenant + invoice number -->
+        <addUniqueConstraint 
+            tableName="invoices" 
+            schemaName="mcp_invoice"
+            columnNames="tenant_id,invoice_number" 
+            constraintName="uk_invoices_tenant_invoice_number"/>
+
+        <!-- Foreign key to tenants table -->
+        <addForeignKeyConstraint 
+            baseTableName="invoices" 
+            baseTableSchemaName="mcp_invoice"
+            baseColumnNames="tenant_id" 
+            constraintName="fk_invoices_tenant_id"
+            referencedTableName="tenants" 
+            referencedTableSchemaName="mcp_invoice"
+            referencedColumnNames="tenant_id"/>
+
+    </changeSet>
+
+</databaseChangeLog>

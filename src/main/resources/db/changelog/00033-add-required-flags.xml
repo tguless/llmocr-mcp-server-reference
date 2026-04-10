@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00033-add-required-flags" author="system">
+        
+        <!-- Add required flag to categories table -->
+        <addColumn tableName="categories" schemaName="mcp_invoice">
+            <column name="required" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        
+        <!-- Add service period required flag to tenants table -->
+        <addColumn tableName="tenants" schemaName="mcp_invoice">
+            <column name="service_period_required" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        
+        <rollback>
+            <dropColumn tableName="categories" columnName="required" schemaName="mcp_invoice"/>
+            <dropColumn tableName="tenants" columnName="service_period_required" schemaName="mcp_invoice"/>
+        </rollback>
+        
+        <comment>Add required flags: categories (per-category flag) and service period (per-tenant flag)</comment>
+    </changeSet>
+
+</databaseChangeLog>
+

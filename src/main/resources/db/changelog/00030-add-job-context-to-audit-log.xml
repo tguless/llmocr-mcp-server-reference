@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="30-add-job-context-to-audit-log" author="system">
+        <comment>Add PDF job context columns to MCP audit log for better traceability</comment>
+
+        <!-- Add job_id column -->
+        <addColumn tableName="mcp_audit_log" schemaName="mcp_invoice">
+            <column name="job_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add source_filename column -->
+        <addColumn tableName="mcp_audit_log" schemaName="mcp_invoice">
+            <column name="source_filename" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add s3_bucket column -->
+        <addColumn tableName="mcp_audit_log" schemaName="mcp_invoice">
+            <column name="s3_bucket" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add s3_object_key column -->
+        <addColumn tableName="mcp_audit_log" schemaName="mcp_invoice">
+            <column name="s3_object_key" type="VARCHAR(500)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add index on job_id for faster queries -->
+        <createIndex indexName="idx_mcp_audit_log_job_id" tableName="mcp_audit_log" schemaName="mcp_invoice">
+            <column name="job_id"/>
+        </createIndex>
+
+        <!-- Add index on source_filename for invoice-to-audit-log queries -->
+        <createIndex indexName="idx_mcp_audit_log_source_filename" tableName="mcp_audit_log" schemaName="mcp_invoice">
+            <column name="source_filename"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
+

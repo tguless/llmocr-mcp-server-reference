@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00013-create-category-rules-table" author="dev-team">
+        <comment>Create table for line item categorization rules</comment>
+        
+        <createTable tableName="line_item_category_rules" schemaName="mcp_invoice">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="rule_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="description" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            
+            <!-- Rule matching criteria -->
+            <column name="keyword_pattern" type="VARCHAR(500)">
+                <constraints nullable="true"/>
+            </column>
+            
+            <column name="amount_min" type="DECIMAL(15,2)">
+                <constraints nullable="true"/>
+            </column>
+            
+            <column name="amount_max" type="DECIMAL(15,2)">
+                <constraints nullable="true"/>
+            </column>
+            
+            <column name="is_credit" type="BOOLEAN">
+                <constraints nullable="true"/>
+            </column>
+            
+            <!-- Target category -->
+            <column name="target_category" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="priority" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            
+            <!-- Learning metrics -->
+            <column name="match_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="correction_count" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="accuracy_rate" type="DECIMAL(5,4)">
+                <constraints nullable="true"/>
+            </column>
+            
+            <!-- Audit fields -->
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="created_by" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        
+        <!-- Indexes -->
+        <createIndex tableName="line_item_category_rules" schemaName="mcp_invoice" 
+                     indexName="idx_category_rules_tenant">
+            <column name="tenant_id"/>
+        </createIndex>
+        
+        <createIndex tableName="line_item_category_rules" schemaName="mcp_invoice" 
+                     indexName="idx_category_rules_priority">
+            <column name="priority" descending="true"/>
+        </createIndex>
+        
+        <createIndex tableName="line_item_category_rules" schemaName="mcp_invoice" 
+                     indexName="idx_category_rules_active">
+            <column name="is_active"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

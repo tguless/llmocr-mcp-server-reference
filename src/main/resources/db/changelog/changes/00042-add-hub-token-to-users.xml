@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00042-add-hub-token-to-users" author="llmocr">
+        <comment>Store PaperIQ hub JWT so the MCP server can re-introspect it on refresh
+                 to enforce PaperIQ logout without any shared secret.</comment>
+        <addColumn tableName="users" schemaName="mcp_invoice">
+            <column name="hub_token" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

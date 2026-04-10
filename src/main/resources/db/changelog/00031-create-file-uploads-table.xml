@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="31-create-file-uploads-table" author="system">
+        <comment>Create file_uploads table to track all uploaded invoice PDFs with generated IDs</comment>
+
+        <createTable tableName="file_uploads" schemaName="mcp_invoice">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false" 
+                             foreignKeyName="fk_file_uploads_tenant_id" 
+                             references="mcp_invoice.tenants(tenant_id)"/>
+            </column>
+
+            <column name="original_filename" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="generated_filename" type="VARCHAR(300)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="file_size_bytes" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="file_type" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="s3_bucket_name" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="s3_object_key" type="VARCHAR(500)">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="upload_source" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="uploaded_by" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="job_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="invoice_id" type="BIGINT">
+                <constraints nullable="true" 
+                             foreignKeyName="fk_file_uploads_invoice_id" 
+                             references="mcp_invoice.invoices(id)"/>
+            </column>
+
+            <column name="processing_status" type="VARCHAR(50)" defaultValue="UPLOADED">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_by" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <!-- Indexes for common queries -->
+        <createIndex indexName="idx_file_uploads_tenant_id" tableName="file_uploads" schemaName="mcp_invoice">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_file_uploads_generated_filename" tableName="file_uploads" schemaName="mcp_invoice">
+            <column name="generated_filename"/>
+        </createIndex>
+
+        <createIndex indexName="idx_file_uploads_job_id" tableName="file_uploads" schemaName="mcp_invoice">
+            <column name="job_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_file_uploads_invoice_id" tableName="file_uploads" schemaName="mcp_invoice">
+            <column name="invoice_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_file_uploads_created_at" tableName="file_uploads" schemaName="mcp_invoice">
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
+

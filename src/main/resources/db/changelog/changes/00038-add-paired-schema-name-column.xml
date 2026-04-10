@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00038-add-paired-schema-name-column" author="llm-ocr-mcp">
+        <comment>
+            Add paired_schema_name column to pdf_raw_json_processing table.
+            This stores the name of the paired schema sent in the X-JSON-Schema-Name header.
+            This prevents LLM hallucination by providing a fixed schema name in tool signatures.
+        </comment>
+
+        <addColumn tableName="pdf_raw_json_processing" schemaName="mcp_invoice">
+            <column name="paired_schema_name" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="pdf_raw_json_processing" schemaName="mcp_invoice" columnName="paired_schema_name"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
+

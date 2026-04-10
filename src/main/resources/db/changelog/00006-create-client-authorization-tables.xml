@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00006-create-client-authorization-tables" author="mcp-invoice-server">
+        <comment>Create client authorization tables for per-tenant client+scope management</comment>
+        
+        <!-- Authorized clients table -->
+        <createTable tableName="authorized_clients" schemaName="mcp_invoice">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="trusted_issuer" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="introspection_endpoint" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="jwks_endpoint" type="VARCHAR(500)"/>
+            <column name="token_endpoint" type="VARCHAR(500)"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+        </createTable>
+
+        <!-- Client scopes table -->
+        <createTable tableName="client_scopes" schemaName="mcp_invoice">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="authorized_client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="scope" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Foreign key constraints -->
+        <addForeignKeyConstraint 
+            baseTableName="authorized_clients" 
+            baseColumnNames="tenant_id" 
+            constraintName="fk_authorized_clients_tenant_id"
+            referencedTableName="tenants"
+            referencedColumnNames="tenant_id"
+            referencedTableSchemaName="mcp_invoice"
+            baseTableSchemaName="mcp_invoice"/>
+
+        <addForeignKeyConstraint 
+            baseTableName="client_scopes" 
+            baseColumnNames="authorized_client_id" 
+            constraintName="fk_client_scopes_authorized_client_id"
+            referencedTableName="authorized_clients"
+            referencedColumnNames="id"
+            referencedTableSchemaName="mcp_invoice"
+            baseTableSchemaName="mcp_invoice"/>
+
+        <!-- Unique constraints -->
+        <addUniqueConstraint 
+            tableName="authorized_clients" 
+            columnNames="tenant_id, client_id"
+            constraintName="uk_authorized_clients_tenant_client"
+            schemaName="mcp_invoice"/>
+
+        <addUniqueConstraint 
+            tableName="client_scopes" 
+            columnNames="authorized_client_id, scope"
+            constraintName="uk_client_scopes_client_scope"
+            schemaName="mcp_invoice"/>
+
+        <!-- Indexes for performance -->
+        <createIndex tableName="authorized_clients" indexName="idx_authorized_clients_tenant_id" schemaName="mcp_invoice">
+            <column name="tenant_id"/>
+        </createIndex>
+        
+        <createIndex tableName="authorized_clients" indexName="idx_authorized_clients_client_id" schemaName="mcp_invoice">
+            <column name="client_id"/>
+        </createIndex>
+
+        <createIndex tableName="client_scopes" indexName="idx_client_scopes_authorized_client_id" schemaName="mcp_invoice">
+            <column name="authorized_client_id"/>
+        </createIndex>
+
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,118 @@
+server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+    
+    # File upload size limits (2GB)
+    client_max_body_size 2000M;
+    client_body_timeout 300s;
+    client_header_timeout 60s;
+
+    # Gzip compression
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+    # DNS resolver for dynamic upstream resolution (AWS VPC DNS)
+    # This allows nginx to resolve service discovery names at runtime
+    resolver 10.0.0.2 valid=10s ipv6=off;
+    resolver_timeout 5s;
+
+    # API proxy configurations (most specific first)
+    
+    # Handle API calls from the /invoice context (more specific, must come first)
+    # /invoice/api/auth/login -> http://MCP_BACKEND_URL/mcp-invoice/api/auth/login
+    # ^~ modifier gives this higher priority than regex locations (like .png matching)
+    # Using rewrite + set + proxy_pass for dynamic DNS resolution with proper URI handling
+    location ^~ /invoice/api/ {
+        set $backend "${MCP_BACKEND_URL}";
+        rewrite ^/invoice/api/(.*)$ /mcp-invoice/api/$1 break;
+        proxy_pass $backend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        
+        # Large file upload support (2GB)
+        proxy_read_timeout 600s;
+        proxy_connect_timeout 75s;
+        proxy_send_timeout 600s;
+        client_max_body_size 2000M;
+    }
+    
+    # Proxy API requests to MCP Invoice Server backend (fallback for root /api/)
+    # ^~ modifier gives this higher priority than regex locations (like .png matching)
+    # Using rewrite + set + proxy_pass for dynamic DNS resolution with proper URI handling
+    location ^~ /api/ {
+        set $backend "${MCP_BACKEND_URL}";
+        rewrite ^/api/(.*)$ /mcp-invoice/api/$1 break;
+        proxy_pass $backend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        
+        # Large file upload support (2GB)
+        proxy_read_timeout 600s;
+        proxy_connect_timeout 75s;
+        proxy_send_timeout 600s;
+        client_max_body_size 2000M;
+    }
+
+    # React Router configurations
+    
+    # Handle /invoice without trailing slash (exact match)
+    location = /invoice {
+        return 301 $scheme://$host/invoice/;
+    }
+    
+    # Handle ALL static assets (images, fonts, etc.) under /invoice/ path
+    # This dynamically strips the /invoice prefix and serves from root
+    location ~ ^/invoice/[^/]+\.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|css|js)$ {
+        rewrite ^/invoice/(.*)$ /$1 break;
+        root /usr/share/nginx/html;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # General static asset handling for root path
+    location ~* \.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        try_files $uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # Handle React Router for /invoice path (other routes)
+    location /invoice/ {
+        alias /usr/share/nginx/html/;
+        try_files $uri $uri/ /index.html;
+        index index.html;
+    }
+
+    # React Router support - serve index.html for all routes at root
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Cache static assets
+    location /static/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}
+

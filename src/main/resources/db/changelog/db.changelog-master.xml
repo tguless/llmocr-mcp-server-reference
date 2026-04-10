@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Schema is created by LiquibaseConfig.java before migrations run -->
+    
+    <!-- Create application user first (needs schema to exist for grants) -->
+    <changeSet id="create-mcp-invoice-app-user" author="system">
+        <sqlFile path="db/changelog/changes/000-create-application-user.sql"
+                 splitStatements="false"/>
+    </changeSet>
+
+    <!-- All other migrations follow -->
+    <include file="db/changelog/00002-create-tenants-table.xml"/>
+    <include file="db/changelog/00003-create-invoices-table.xml"/>
+    <include file="db/changelog/00004-create-invoice-line-items-table.xml"/>
+    <include file="db/changelog/00005-create-mcp-audit-log-table.xml"/>
+    <include file="db/changelog/00006-create-client-authorization-tables.xml"/>
+    <include file="db/changelog/00007-create-indexes.xml"/>
+    <include file="db/changelog/00008-insert-default-data.xml"/>
+    <include file="db/changelog/00009-insert-default-client-authorization.xml"/>
+    <include file="db/changelog/00011-add-audience-url-column.xml"/>
+    <include file="db/changelog/00012-add-line-item-categorization.xml"/>
+    <include file="db/changelog/00013-create-category-rules-table.xml"/>
+    <include file="db/changelog/00014-create-category-corrections-table.xml"/>
+    <include file="db/changelog/00015-create-users-table.xml"/>
+    <include file="db/changelog/00016-add-user-status-column.xml"/>
+    <include file="db/changelog/00017-create-vendors-table.xml"/>
+    <include file="db/changelog/00018-add-vendor-id-to-invoices.xml"/>
+    <include file="db/changelog/00019-add-service-period-to-invoices.xml"/>
+    <include file="db/changelog/00020-create-invoice-metadata-table.xml"/>
+    <include file="db/changelog/00021-add-s3-configuration.xml"/>
+    <include file="db/changelog/00022-create-metadata-key-definition-table.xml"/>
+    <include file="db/changelog/00023-insert-default-metadata-keys.xml"/>
+    <include file="db/changelog/00024-fix-metadata-keys-tenant-id.xml"/>
+    <include file="db/changelog/00025-fix-unit-price-precision.xml"/>
+    <include file="db/changelog/00026-create-password-reset-tokens-table.xml"/>
+    <include file="db/changelog/00027-create-categories-table.xml"/>
+    <include file="db/changelog/00028-populate-admin-categories.xml"/>
+    <include file="db/changelog/00029-add-tenant-branding.xml"/>
+    <include file="db/changelog/00030-add-job-context-to-audit-log.xml"/>
+    <include file="db/changelog/00031-create-file-uploads-table.xml"/>
+    <include file="db/changelog/00032-fix-file-uploads-fk-cascade.xml"/>
+    <include file="db/changelog/00033-add-required-flags.xml"/>
+    <include file="db/changelog/changes/00035-create-pdf-raw-json-processing-table.xml"/>
+    <include file="db/changelog/changes/00036-create-json-schemas-table.xml"/>
+    <include file="db/changelog/changes/00037-add-json-schema-fk-to-raw-json-processing.xml"/>
+    <include file="db/changelog/changes/00038-add-paired-schema-name-column.xml"/>
+    <include file="db/changelog/changes/00039-clear-default-introspection-endpoints.xml"/>
+    <include file="db/changelog/changes/00040-create-tenant-settings-table.xml"/>
+    <include file="db/changelog/changes/00041-authorized-client-redirect-allowlist.xml"/>
+    <include file="db/changelog/changes/00042-add-hub-token-to-users.xml"/>
+    <include file="db/changelog/00034-fix-s3-bucket-for-aws.xml"/>
+
+</databaseChangeLog>

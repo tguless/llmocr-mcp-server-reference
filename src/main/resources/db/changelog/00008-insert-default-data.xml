@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00008-insert-default-data" author="mcp-invoice-server">
+        <!-- Only run if default tenant doesn't exist -->
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sqlCheck expectedResult="1">SELECT COUNT(*) FROM mcp_invoice.tenants WHERE tenant_id = 'default'</sqlCheck>
+            </not>
+        </preConditions>
+        
+        <comment>Insert default tenant and configuration data</comment>
+        
+        <!-- Insert default tenant -->
+        <insert tableName="tenants" schemaName="mcp_invoice">
+            <column name="tenant_id" value="default"/>
+            <column name="tenant_name" value="Default Tenant"/>
+            <column name="description" value="Default tenant for single-tenant deployments"/>
+            <column name="active" valueBoolean="true"/>
+            <column name="created_by" value="system"/>
+            <column name="updated_by" value="system"/>
+        </insert>
+
+        <!-- Insert demo tenant for testing -->
+        <insert tableName="tenants" schemaName="mcp_invoice">
+            <column name="tenant_id" value="demo"/>
+            <column name="tenant_name" value="Demo Company"/>
+            <column name="description" value="Demo tenant for testing and demonstrations"/>
+            <column name="active" valueBoolean="true"/>
+            <column name="created_by" value="system"/>
+            <column name="updated_by" value="system"/>
+        </insert>
+
+        <!-- Insert LLM OCR tenant -->
+        <insert tableName="tenants" schemaName="mcp_invoice">
+            <column name="tenant_id" value="llm-ocr"/>
+            <column name="tenant_name" value="LLM OCR System"/>
+            <column name="description" value="Main LLM OCR application tenant"/>
+            <column name="active" valueBoolean="true"/>
+            <column name="created_by" value="system"/>
+            <column name="updated_by" value="system"/>
+        </insert>
+
+        <!-- Insert admin tenant -->
+        <insert tableName="tenants" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="tenant_name" value="Admin Tenant"/>
+            <column name="description" value="Administrative tenant for main application"/>
+            <column name="active" valueBoolean="true"/>
+            <column name="created_by" value="system"/>
+            <column name="updated_by" value="system"/>
+        </insert>
+
+    </changeSet>
+
+</databaseChangeLog>

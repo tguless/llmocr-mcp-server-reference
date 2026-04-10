@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Fix metadata key tenant IDs from "*" wildcard to "admin" tenant -->
+    <changeSet id="00024-fix-metadata-keys-tenant-id" author="llmocr">
+        <comment>Update metadata key definitions from wildcard tenant "*" to "admin" tenant</comment>
+        
+        <!-- Update all metadata keys from tenant_id="*" to tenant_id="admin" -->
+        <update tableName="metadata_key_definition" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <where>tenant_id = '*'</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>

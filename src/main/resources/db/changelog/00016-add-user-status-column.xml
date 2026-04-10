@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00016-add-user-status-column" author="system">
+        <comment>Add status column to users table and make tenant_id nullable</comment>
+
+        <!-- Add status column -->
+        <addColumn tableName="users" schemaName="mcp_invoice">
+            <column name="status" type="VARCHAR(50)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <!-- Make tenant_id nullable for pending users -->
+        <dropNotNullConstraint tableName="users" 
+                              schemaName="mcp_invoice" 
+                              columnName="tenant_id" 
+                              columnDataType="VARCHAR(100)"/>
+
+        <!-- Update existing users to ACTIVE status -->
+        <sql>
+            UPDATE mcp_invoice.users SET status = 'ACTIVE' WHERE tenant_id IS NOT NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+
+
+

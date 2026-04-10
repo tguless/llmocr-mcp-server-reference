@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00019-add-service-period-to-invoices" author="mcp-invoice-server">
+        <comment>Add service_period_start_date and service_period_end_date columns to invoices table for tracking service billing periods</comment>
+
+        <!-- Add service period start date column -->
+        <addColumn tableName="invoices" schemaName="mcp_invoice">
+            <column name="service_period_start_date" type="DATE">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add service period end date column -->
+        <addColumn tableName="invoices" schemaName="mcp_invoice">
+            <column name="service_period_end_date" type="DATE">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Create index on service period dates for efficient querying -->
+        <createIndex tableName="invoices" schemaName="mcp_invoice" indexName="idx_invoices_service_period">
+            <column name="service_period_start_date"/>
+            <column name="service_period_end_date"/>
+        </createIndex>
+
+        <!-- Add comments explaining the columns -->
+        <sql>
+            COMMENT ON COLUMN mcp_invoice.invoices.service_period_start_date IS 'Start date of the service period covered by this invoice';
+            COMMENT ON COLUMN mcp_invoice.invoices.service_period_end_date IS 'End date of the service period covered by this invoice';
+        </sql>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00018-add-vendor-id-to-invoices" author="mcp-invoice-server">
+        <comment>Add vendor_id foreign key to invoices table and update unique constraint to include vendor_id</comment>
+
+        <!-- Step 1: Add vendor_id column (nullable initially to allow existing data) -->
+        <addColumn tableName="invoices" schemaName="mcp_invoice">
+            <column name="vendor_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Step 2: Create index on vendor_id for foreign key performance -->
+        <createIndex tableName="invoices" schemaName="mcp_invoice" indexName="idx_invoices_vendor_id">
+            <column name="vendor_id"/>
+        </createIndex>
+
+        <!-- Step 3: Add foreign key constraint to vendors table -->
+        <addForeignKeyConstraint
+            baseTableName="invoices"
+            baseTableSchemaName="mcp_invoice"
+            baseColumnNames="vendor_id"
+            constraintName="fk_invoices_vendor_id"
+            referencedTableName="vendors"
+            referencedTableSchemaName="mcp_invoice"
+            referencedColumnNames="id"
+            onDelete="RESTRICT"
+            onUpdate="CASCADE"/>
+
+        <!-- Step 4: Drop old unique constraint that only includes tenant_id and invoice_number -->
+        <dropUniqueConstraint
+            tableName="invoices"
+            schemaName="mcp_invoice"
+            constraintName="uk_invoices_tenant_invoice_number"/>
+
+        <!-- Step 5: Add new unique constraint that includes tenant_id, vendor_id, and invoice_number -->
+        <!-- This allows different vendors to use the same invoice number -->
+        <addUniqueConstraint
+            tableName="invoices"
+            schemaName="mcp_invoice"
+            columnNames="tenant_id, vendor_id, invoice_number"
+            constraintName="uk_invoices_tenant_vendor_invoice_number"/>
+
+        <!-- Step 6: Add comment to explain the constraint -->
+        <sql>
+            COMMENT ON CONSTRAINT uk_invoices_tenant_vendor_invoice_number ON mcp_invoice.invoices IS 
+            'Ensures invoice numbers are unique per tenant and vendor combination, allowing different vendors to use the same invoice number';
+        </sql>
+
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00029-add-tenant-branding" author="mcp-invoice-server">
+        <comment>Add branding columns to tenants table for customizable tenant branding</comment>
+        
+        <!-- Logo URL for main application header -->
+        <addColumn tableName="tenants" schemaName="mcp_invoice">
+            <column name="logo_url" type="VARCHAR(1000)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- Logo URL for login page -->
+        <addColumn tableName="tenants" schemaName="mcp_invoice">
+            <column name="login_logo_url" type="VARCHAR(1000)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- Primary brand color (hex format, e.g., #EE1C25) -->
+        <addColumn tableName="tenants" schemaName="mcp_invoice">
+            <column name="primary_color" type="VARCHAR(7)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- Secondary brand color (hex format, e.g., #00AAFF) -->
+        <addColumn tableName="tenants" schemaName="mcp_invoice">
+            <column name="secondary_color" type="VARCHAR(7)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- Company/System name displayed in UI -->
+        <addColumn tableName="tenants" schemaName="mcp_invoice">
+            <column name="display_name" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- Tagline/subtitle displayed below logo -->
+        <addColumn tableName="tenants" schemaName="mcp_invoice">
+            <column name="tagline" type="VARCHAR(500)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+    </changeSet>
+
+</databaseChangeLog>
+

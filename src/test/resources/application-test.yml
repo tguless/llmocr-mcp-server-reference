@@ -1,0 +1,44 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+    
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+    
+  liquibase:
+    enabled: false # Disable for tests, use JPA schema generation
+    
+  ai:
+    mcp:
+      server:
+        enabled: true
+        name: test-invoice-server
+        annotation-scanner:
+          enabled: true
+
+# Test JWT configuration
+jwt:
+  secret: testSecretKey12345testSecretKey12345testSecretKey12345testSecretKey12345
+  access-token-expiration: 3600000
+  refresh-token-expiration: 86400000
+
+# Test multi-tenancy
+multitenancy:
+  enabled: true
+  default-tenant: test
+  tenant-header: X-Tenant-ID
+
+# Logging for tests
+logging:
+  level:
+    com.llmocr.mcp.invoice: DEBUG
+    org.springframework.test: INFO

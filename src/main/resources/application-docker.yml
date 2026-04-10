@@ -1,0 +1,141 @@
+# Docker-specific configuration for MCP Invoice Server
+server:
+  port: 8081
+  servlet:
+    context-path: /mcp-invoice
+
+spring:
+  application:
+    name: mcp-invoice-server
+  
+  datasource:
+    # Use environment variables for DB connection (works in both Docker Compose and AWS ECS)
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:llm_ocr_db}?currentSchema=mcp_invoice
+    username: ${DB_USERNAME:mcp_invoice_user}
+    password: ${DB_PASSWORD:mcp_invoice_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      # Shared RDS: keep MCP footprint small (Liquibase uses a separate pool in LiquibaseConfig).
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:5}
+      minimum-idle: ${DB_POOL_MIN_IDLE:1}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        default_schema: mcp_invoice
+    
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    # Use mcp_invoice schema for BOTH tracking tables AND application tables
+    # This provides complete separation from the main LLM-OCR backend
+    liquibase-schema: mcp_invoice
+    default-schema: mcp_invoice
+    # Context for AWS-specific migrations (e.g., fixing bucket names)
+    contexts: docker
+    # Liquibase uses master credentials to create schema and application user
+    user: ${LIQUIBASE_USER:postgres}
+    password: ${LIQUIBASE_PASSWORD:changeme}
+    parameters:
+      mcp.app.db.username: ${MCP_APP_DB_USERNAME:mcp_invoice_app}
+      mcp.app.db.password: ${MCP_APP_DB_PASSWORD:changeme}
+  
+  # File Upload Configuration
+  servlet:
+    multipart:
+      max-file-size: 2GB
+      max-request-size: 2GB
+
+  ai:
+    mcp:
+      server:
+        enabled: true
+        protocol: STATELESS
+        name: invoice-processing-server
+        version: 1.0.0
+        instructions: "Multi-tenant invoice processing server for Docker deployment"
+        type: SYNC
+        tool-callback-converter: true
+        capabilities:
+          tool: true
+          resource: true
+          prompt: false
+          completion: false
+        stateless:
+          mcp-endpoint: /mcp
+          disallow-delete: false
+        request-timeout: 30s
+
+# All JWT validation and client authorization managed via database
+# No static configuration needed - everything is dynamic
+
+# Multi-tenant Configuration
+multitenancy:
+  enabled: true
+  default-tenant: default
+  tenant-header: X-Tenant-ID
+  tenant-claim: tenant_id
+
+# Local JWT: 5-minute access tokens. PaperIQ hub token is re-introspected on each refresh.
+jwt:
+  expiration: ${JWT_EXPIRATION:300000}
+
+# Security Configuration
+security:
+  auth:
+    local-registration-enabled: ${LOCAL_REGISTRATION_ENABLED:false}
+    local-password-login-enabled: ${LOCAL_PASSWORD_LOGIN_ENABLED:false}
+  mcp:
+    enabled: true
+    require-authentication: true
+  admin-sso:
+    token-endpoint: ${ADMIN_SSO_TOKEN_ENDPOINT:https://paperiq.ai/llmocr/api/mcp/admin-sso/token}
+    client-id: ${ADMIN_SSO_CLIENT_ID:}
+    client-secret: ${ADMIN_SSO_CLIENT_SECRET:}
+  jwt:
+    # Docker introspection endpoint - use container name for inter-container communication
+    introspection-endpoint: ${JWT_INTROSPECTION_ENDPOINT:https://paperiq.ai/llmocr/api/jwt/validate}
+    # Allow both legacy and current public MCP audiences.
+    allowed-audiences: ${JWT_ALLOWED_AUDIENCES:https://paperiq.ai/invoice,https://paperiq.ai/mcp-invoice,https://eyesense.ai/invoice,https://eyesense.ai/mcp-invoice}
+
+# Logging
+logging:
+  level:
+    com.llmocr.mcp.invoice: INFO
+    org.springframework.security: WARN
+    liquibase: INFO
+
+# S3/MinIO Configuration for Docker
+s3:
+  # Public endpoint for browser access to presigned URLs
+  # This should be the publicly accessible URL for MinIO
+  public-endpoint: ${S3_PUBLIC_ENDPOINT:https://eyesense.ai/invoice/minio}
+  
+  # Default server endpoint for S3/MinIO (internal Docker service name)
+  default-endpoint: ${S3_DEFAULT_ENDPOINT:http://minio:9000}
+  
+  # Default MinIO credentials for Docker deployment
+  default-access-key: ${S3_DEFAULT_ACCESS_KEY:minioadmin}
+  default-secret-key: ${S3_DEFAULT_SECRET_KEY:minioadmin}
+
+# Application Configuration
+app:
+  base-url: ${APP_BASE_URL:https://eyesense.ai/invoice}
+  email:
+    from: ${EMAIL_FROM:noreply@eyesense.ai}
+
+# CORS Configuration
+cors:
+  allowed-origins: ${CORS_ORIGINS:https://eyesense.ai,https://paperiq.ai,https://www.paperiq.ai,http://localhost:13002}
+
+# LLMOCR Main App Integration
+# This enables MCP Invoice Server to query LLMOCR for tenant S3 bucket configurations
+llmocr:
+  api:
+    base-url: ${LLMOCR_API_URL:https://paperiq.ai}
+    context-path: ${LLMOCR_CONTEXT_PATH:/llmocr/api}

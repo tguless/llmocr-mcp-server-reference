@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00035-create-pdf-raw-json-processing-table" author="llm-ocr">
+        <comment>
+            Create table to store raw JSON processing paired with PDF files.
+            Tracks tenant, job, PDF details, input JSON, and processing results.
+        </comment>
+
+        <createTable tableName="pdf_raw_json_processing" schemaName="mcp_invoice">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <!-- Tenant and User Context -->
+            <column name="tenant_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+
+            <!-- Job Context (PDF being processed) -->
+            <column name="job_id" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="source_filename" type="VARCHAR(500)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="s3_bucket" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="s3_object_key" type="VARCHAR(1000)">
+                <constraints nullable="true"/>
+            </column>
+
+            <!-- Tool Information -->
+            <column name="tool_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- JSON Data -->
+            <column name="raw_json_input" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processed_output" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="paired_schema_used" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+
+            <!-- Processing Status -->
+            <column name="processing_status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="error_message" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+
+            <!-- Timestamps -->
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Indexes for common queries -->
+        <createIndex indexName="idx_pdf_raw_json_tenant_id" tableName="pdf_raw_json_processing" schemaName="mcp_invoice">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_pdf_raw_json_job_id" tableName="pdf_raw_json_processing" schemaName="mcp_invoice">
+            <column name="job_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_pdf_raw_json_source_filename" tableName="pdf_raw_json_processing" schemaName="mcp_invoice">
+            <column name="source_filename"/>
+        </createIndex>
+
+        <createIndex indexName="idx_pdf_raw_json_tenant_job" tableName="pdf_raw_json_processing" schemaName="mcp_invoice">
+            <column name="tenant_id"/>
+            <column name="job_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_pdf_raw_json_created_at" tableName="pdf_raw_json_processing" schemaName="mcp_invoice">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

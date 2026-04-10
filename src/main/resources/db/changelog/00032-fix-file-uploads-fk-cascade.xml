@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="32-fix-file-uploads-fk-cascade" author="system">
+        <comment>Fix foreign key constraint on file_uploads.invoice_id to allow invoice deletion</comment>
+
+        <!-- Drop the existing foreign key constraint -->
+        <dropForeignKeyConstraint 
+            baseTableName="file_uploads" 
+            baseTableSchemaName="mcp_invoice"
+            constraintName="fk_file_uploads_invoice_id"/>
+
+        <!-- Recreate with ON DELETE SET NULL to preserve upload records when invoice is deleted -->
+        <addForeignKeyConstraint 
+            baseTableName="file_uploads" 
+            baseTableSchemaName="mcp_invoice"
+            baseColumnNames="invoice_id"
+            constraintName="fk_file_uploads_invoice_id"
+            referencedTableName="invoices"
+            referencedTableSchemaName="mcp_invoice"
+            referencedColumnNames="id"
+            onDelete="SET NULL"/>
+
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Create metadata_key_definition table for controlling allowed metadata keys -->
+    <changeSet id="00022-create-metadata-key-definition-table" author="llmocr">
+        <!-- Create metadata_key_definition table -->
+        <createTable tableName="metadata_key_definition" schemaName="mcp_invoice">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" primaryKeyName="pk_metadata_key_definition"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)" remarks="Tenant identifier">
+                <constraints nullable="false"/>
+            </column>
+            <column name="key_code" type="VARCHAR(255)" remarks="Unique key code (e.g., generated_kwh)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="display_name" type="VARCHAR(255)" remarks="Human-readable display name">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT" remarks="Full description of what this metadata represents">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="VARCHAR(100)" remarks="Category: GENERATION, RATES, IDENTIFIERS, BILLING, PERFORMANCE, CREDITS, CUSTOM">
+                <constraints nullable="true"/>
+            </column>
+            <column name="data_type" type="VARCHAR(50)" remarks="Data type: STRING, NUMBER, DECIMAL, PERCENTAGE, DATE">
+                <constraints nullable="true"/>
+            </column>
+            <column name="example_value" type="VARCHAR(500)" remarks="Example value for this metadata key">
+                <constraints nullable="true"/>
+            </column>
+            <column name="required" type="BOOLEAN" defaultValueBoolean="false" remarks="Whether this key is required">
+                <constraints nullable="false"/>
+            </column>
+            <column name="billable" type="BOOLEAN" defaultValueBoolean="false" remarks="Whether this metadata affects billing">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true" remarks="Whether this key is active">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" remarks="Timestamp when record was created">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" remarks="Timestamp when record was last updated">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)" remarks="User who created the record">
+                <constraints nullable="true"/>
+            </column>
+            <column name="updated_by" type="VARCHAR(100)" remarks="User who last updated the record">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <!-- Create unique constraint on tenant_id and key_code -->
+        <addUniqueConstraint
+                tableName="metadata_key_definition"
+                columnNames="tenant_id, key_code"
+                constraintName="uq_metadata_key_definition_tenant_key"
+                schemaName="mcp_invoice"/>
+
+        <!-- Create indexes for efficient querying -->
+        <createIndex
+                indexName="idx_metadata_key_definition_tenant"
+                tableName="metadata_key_definition"
+                schemaName="mcp_invoice">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex
+                indexName="idx_metadata_key_definition_tenant_active"
+                tableName="metadata_key_definition"
+                schemaName="mcp_invoice">
+            <column name="tenant_id"/>
+            <column name="active"/>
+        </createIndex>
+
+        <createIndex
+                indexName="idx_metadata_key_definition_tenant_category"
+                tableName="metadata_key_definition"
+                schemaName="mcp_invoice">
+            <column name="tenant_id"/>
+            <column name="category"/>
+        </createIndex>
+
+        <createIndex
+                indexName="idx_metadata_key_definition_created_at"
+                tableName="metadata_key_definition"
+                schemaName="mcp_invoice">
+            <column name="created_at"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

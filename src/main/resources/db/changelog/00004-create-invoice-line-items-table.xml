@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00004-create-invoice-line-items-table" author="mcp-invoice-server">
+        <comment>Create invoice line items table</comment>
+        
+        <createTable tableName="invoice_line_items" schemaName="mcp_invoice">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="invoice_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="line_number" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="DECIMAL(10,3)"/>
+            <column name="unit_price" type="DECIMAL(15,2)"/>
+            <column name="line_total" type="DECIMAL(15,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tax_rate" type="DECIMAL(5,4)"/>
+            <column name="tax_amount" type="DECIMAL(15,2)"/>
+            <column name="product_code" type="VARCHAR(100)"/>
+            <column name="unit_of_measure" type="VARCHAR(50)"/>
+            <column name="metadata" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Foreign key to invoices table -->
+        <addForeignKeyConstraint 
+            baseTableName="invoice_line_items" 
+            baseTableSchemaName="mcp_invoice"
+            baseColumnNames="invoice_id" 
+            constraintName="fk_invoice_line_items_invoice_id"
+            referencedTableName="invoices" 
+            referencedTableSchemaName="mcp_invoice"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+
+        <!-- Unique constraint for invoice + line number -->
+        <addUniqueConstraint 
+            tableName="invoice_line_items" 
+            schemaName="mcp_invoice"
+            columnNames="invoice_id,line_number" 
+            constraintName="uk_invoice_line_items_invoice_line"/>
+
+    </changeSet>
+
+</databaseChangeLog>

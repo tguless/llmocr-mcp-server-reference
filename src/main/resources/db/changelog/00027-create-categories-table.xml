@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00027-create-categories-table" author="mcp-invoice-server">
+        <comment>Create categories table for tenant-specific category management</comment>
+        
+        <createTable tableName="categories" schemaName="mcp_invoice">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category_code" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="is_pass_through" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_credit" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_billable" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="keywords" type="TEXT"/>
+            <column name="examples" type="TEXT"/>
+            <column name="categorization_instructions" type="TEXT"/>
+            <column name="display_order" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+        </createTable>
+
+        <!-- Unique constraint on tenant_id + category_code -->
+        <addUniqueConstraint 
+            tableName="categories" 
+            schemaName="mcp_invoice"
+            columnNames="tenant_id, category_code" 
+            constraintName="uk_categories_tenant_code"/>
+
+        <!-- Index on tenant_id for performance -->
+        <createIndex indexName="idx_categories_tenant" tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <!-- Index on is_active for filtering -->
+        <createIndex indexName="idx_categories_active" tableName="categories" schemaName="mcp_invoice">
+            <column name="is_active"/>
+        </createIndex>
+
+        <!-- Index on display_order for sorting -->
+        <createIndex indexName="idx_categories_display_order" tableName="categories" schemaName="mcp_invoice">
+            <column name="display_order"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
+

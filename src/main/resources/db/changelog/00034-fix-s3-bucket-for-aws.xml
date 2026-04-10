@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ========================================== -->
+    <!-- Fix S3 Bucket Names for AWS Deployment    -->
+    <!-- The AWS bucket is 'llm-ocr-invoices-435236352827' -->
+    <!-- not 'llm-ocr-invoices' (MinIO bucket)     -->
+    <!-- ========================================== -->
+
+    <changeSet id="00034-1-update-existing-buckets-to-aws" author="llm-ocr" context="docker or prod">
+        <validCheckSum>ANY</validCheckSum>
+        <comment>
+            Update any S3 bucket configurations that have 'llm-ocr-invoices' 
+            to use the correct AWS bucket name 'llm-ocr-invoices-435236352827'.
+            Only runs in docker/prod context (AWS deployment).
+        </comment>
+
+        <!-- Update any existing configs that use the wrong bucket name -->
+        <update tableName="s3_bucket_configurations" schemaName="mcp_invoice">
+            <column name="bucket_name" value="llm-ocr-invoices-435236352827"/>
+            <where>bucket_name = 'llm-ocr-invoices'</where>
+        </update>
+
+        <!-- Also fix 'invoices' (old MinIO bucket name) -->
+        <update tableName="s3_bucket_configurations" schemaName="mcp_invoice">
+            <column name="bucket_name" value="llm-ocr-invoices-435236352827"/>
+            <where>bucket_name = 'invoices'</where>
+        </update>
+    </changeSet>
+
+    <!-- 
+         Note: We no longer auto-create bucket configs in MCP Invoice Server.
+         
+         The InvoiceToolService now falls back to LLMOCR's API to check bucket authorization,
+         which provides a unified approach that works for both local (MinIO) and AWS (S3).
+         
+         When a user registers in LLMOCR, the bucket mapping is created in the main app's
+         s3_bucket_template_mappings table. MCP Invoice Server validates against that via API.
+    -->
+
+</databaseChangeLog>

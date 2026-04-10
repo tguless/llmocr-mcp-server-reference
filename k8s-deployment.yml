@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-invoice-server
+  labels:
+    app: mcp-invoice-server
+    version: v1
+spec:
+  replicas: 3  # Horizontal scaling - multiple instances
+  selector:
+    matchLabels:
+      app: mcp-invoice-server
+  template:
+    metadata:
+      labels:
+        app: mcp-invoice-server
+        version: v1
+    spec:
+      containers:
+      - name: mcp-invoice-server
+        image: mcp-invoice-server:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mcp-db-secret
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mcp-db-secret
+              key: password
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: mcp-jwt-secret
+              key: secret
+        - name: SPRING_PROFILES_ACTIVE
+          value: "production"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /mcp-invoice/actuator/health
+            port: 8081
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /mcp-invoice/actuator/health
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        # Stateless configuration - no persistent volumes needed
+        volumeMounts: []
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-invoice-server-service
+  labels:
+    app: mcp-invoice-server
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8081
+    targetPort: 8081
+    protocol: TCP
+  selector:
+    app: mcp-invoice-server
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mcp-invoice-server-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # Enable session affinity is NOT needed - stateless design
+    nginx.ingress.kubernetes.io/affinity: "false"
+    # Enable CORS for MCP requests
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET,POST,PUT,DELETE,OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization,Content-Type,X-Requested-With,Accept,Origin,X-Client-ID,X-User-ID,X-Tenant-ID"
+spec:
+  rules:
+  - host: mcp-invoice.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mcp-invoice-server-service
+            port:
+              number: 8081
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mcp-invoice-server-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mcp-invoice-server
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

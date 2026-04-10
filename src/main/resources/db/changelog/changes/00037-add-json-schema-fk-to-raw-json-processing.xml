@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00037-add-json-schema-fk-to-raw-json-processing" author="llm-ocr">
+        <comment>
+            Add foreign key relationship from pdf_raw_json_processing to json_schemas.
+            This links each raw JSON processing record to the schema it was validated against.
+        </comment>
+
+        <!-- Add json_schema_id column -->
+        <addColumn tableName="pdf_raw_json_processing" schemaName="mcp_invoice">
+            <column name="json_schema_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add foreign key constraint -->
+        <addForeignKeyConstraint
+            baseTableName="pdf_raw_json_processing"
+            baseTableSchemaName="mcp_invoice"
+            baseColumnNames="json_schema_id"
+            constraintName="fk_pdf_raw_json_processing_json_schema"
+            referencedTableName="json_schemas"
+            referencedTableSchemaName="mcp_invoice"
+            referencedColumnNames="id"
+            onDelete="SET NULL"
+            onUpdate="CASCADE"
+        />
+
+        <!-- Add index for foreign key lookups -->
+        <createIndex indexName="idx_pdf_raw_json_processing_schema_id" tableName="pdf_raw_json_processing" schemaName="mcp_invoice">
+            <column name="json_schema_id"/>
+        </createIndex>
+
+        <!-- Add validation_errors column for storing detailed validation errors -->
+        <addColumn tableName="pdf_raw_json_processing" schemaName="mcp_invoice">
+            <column name="validation_errors" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
+

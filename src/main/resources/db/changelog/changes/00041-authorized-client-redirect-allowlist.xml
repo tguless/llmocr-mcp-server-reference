@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00041-authorized-client-redirect-allowlist" author="mcp-invoice-server">
+        <comment>Add owner-authorized redirect URI allowlist for SSO validation</comment>
+
+        <addColumn tableName="authorized_clients" schemaName="mcp_invoice">
+            <column name="authorized_redirect_uris" type="JSONB">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

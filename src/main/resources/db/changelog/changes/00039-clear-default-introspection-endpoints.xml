@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00039-clear-default-introspection-endpoints-v2" author="mcp-invoice-server">
+        <comment>
+            Clear hardcoded localhost introspection endpoints from default client authorizations.
+            This allows the application to use the environment-configured default endpoint instead.
+            Only clears introspection_endpoint - other columns have NOT NULL constraints.
+        </comment>
+        
+        <!-- Clear only introspection_endpoint - the code checks this field -->
+        <!-- Other endpoint columns have NOT NULL constraints so we leave them -->
+        <update tableName="authorized_clients" schemaName="mcp_invoice">
+            <column name="introspection_endpoint" value=""/>
+            <where>introspection_endpoint LIKE '%localhost%' OR introspection_endpoint LIKE '%llm-ocr-backend%'</where>
+        </update>
+        
+    </changeSet>
+</databaseChangeLog>
+

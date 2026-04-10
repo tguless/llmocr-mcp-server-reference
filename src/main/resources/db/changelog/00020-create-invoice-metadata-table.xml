@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00020-create-invoice-metadata-table" author="mcp-invoice-server">
+        <comment>Create invoice_metadata table for storing customer-specific key-value pairs (e.g., generated kWh, contracted rates)</comment>
+
+        <!-- Create the invoice_metadata table -->
+        <createTable tableName="invoice_metadata" schemaName="mcp_invoice">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)" remarks="Tenant identifier for multi-tenancy">
+                <constraints nullable="false"/>
+            </column>
+            <column name="invoice_id" type="BIGINT" remarks="Reference to the invoice">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_key" type="VARCHAR(255)" remarks="The key for this metadata entry">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata_value" type="TEXT" remarks="The value for this metadata entry (supports large text)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)" remarks="User who created this entry">
+                <constraints nullable="true"/>
+            </column>
+            <column name="updated_by" type="VARCHAR(100)" remarks="User who last updated this entry">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <!-- Add unique constraint on tenant_id, invoice_id, and metadata_key -->
+        <addUniqueConstraint
+            tableName="invoice_metadata"
+            schemaName="mcp_invoice"
+            columnNames="invoice_id, metadata_key"
+            constraintName="uk_invoice_metadata_invoice_key"/>
+
+        <!-- Add foreign key constraint to invoices table -->
+        <addForeignKeyConstraint
+            baseTableName="invoice_metadata"
+            baseTableSchemaName="mcp_invoice"
+            baseColumnNames="invoice_id"
+            constraintName="fk_invoice_metadata_invoice_id"
+            referencedTableName="invoices"
+            referencedTableSchemaName="mcp_invoice"
+            referencedColumnNames="id"
+            onDelete="CASCADE"
+            onUpdate="CASCADE"/>
+
+        <!-- Create indexes for efficient queries -->
+        <createIndex
+            tableName="invoice_metadata"
+            schemaName="mcp_invoice"
+            indexName="idx_invoice_metadata_tenant_invoice">
+            <column name="tenant_id"/>
+            <column name="invoice_id"/>
+        </createIndex>
+
+        <createIndex
+            tableName="invoice_metadata"
+            schemaName="mcp_invoice"
+            indexName="idx_invoice_metadata_tenant_key">
+            <column name="tenant_id"/>
+            <column name="metadata_key"/>
+        </createIndex>
+
+        <!-- Add table and column comments -->
+        <sql>
+            COMMENT ON TABLE mcp_invoice.invoice_metadata IS 'Stores customer-specific key-value pairs for invoices, allowing flexible metadata storage without schema changes';
+            COMMENT ON COLUMN mcp_invoice.invoice_metadata.metadata_key IS 'The metadata key (e.g., generated_kwh, contracted_rate, etc.)';
+            COMMENT ON COLUMN mcp_invoice.invoice_metadata.metadata_value IS 'The metadata value as a string (can store numeric values as strings)';
+        </sql>
+
+    </changeSet>
+
+</databaseChangeLog>

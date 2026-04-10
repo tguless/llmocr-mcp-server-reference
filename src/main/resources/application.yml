@@ -1,0 +1,205 @@
+server:
+  port: ${SERVER_PORT:8081}
+  servlet:
+    context-path: /mcp-invoice
+  # Increase max HTTP header size to accommodate Base64-encoded JSON schemas
+  # Complex schemas like EnergyGenerationContract can be 100KB+, Base64 adds 33%
+  # Setting to 1MB to handle even the largest schemas comfortably
+  max-http-request-header-size: 1048576  # 1MB
+  tomcat:
+    max-http-request-header-size: 1048576  # 1MB (also set for Tomcat-specific config)
+
+spring:
+  application:
+    name: mcp-invoice-server
+  
+  datasource:
+    url: jdbc:postgresql://localhost:15432/llm_ocr_db?currentSchema=mcp_invoice
+    username: ${DB_USERNAME:mcp_invoice_user}
+    password: ${DB_PASSWORD:mcp_invoice_password}
+    driver-class-name: org.postgresql.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Back to validate since you're running in IntelliJ
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        default_schema: mcp_invoice
+    
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    # Use mcp_invoice schema for BOTH tracking tables AND application tables
+    # This provides complete separation from the main LLM-OCR backend
+    liquibase-schema: mcp_invoice
+    default-schema: mcp_invoice
+    # Liquibase uses master credentials to create schema and application user
+    user: ${LIQUIBASE_USER:liquibase_user}
+    password: ${LIQUIBASE_PASSWORD:liquibase_password}
+    # Pass application user credentials to Liquibase for substitution
+    parameters:
+      mcp.app.db.username: ${MCP_APP_DB_USERNAME:mcp_invoice_app}
+      mcp.app.db.password: ${MCP_APP_DB_PASSWORD:changeme}
+
+  # SendGrid Email Configuration
+  # Email notifications are ONLY enabled if SENDGRID_API_KEY environment variable is set
+  # to a valid SendGrid API key (not the placeholder value)
+  # If not configured, password reset emails will fail with clear error message
+  mail:
+    host: smtp.sendgrid.net
+    port: 587
+    username: apikey
+    password: ${SENDGRID_API_KEY:your-sendgrid-api-key-here}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+  
+  # File Upload Configuration
+  servlet:
+    multipart:
+      max-file-size: 2GB
+      max-request-size: 2GB
+
+  ai:
+    mcp:
+      server:
+        enabled: true
+        protocol: STATELESS  # Enable stateless server as per documentation
+        name: invoice-processing-server
+        version: 1.0.0
+        instructions: "Multi-tenant invoice processing server optimized for cloud deployments"
+        type: SYNC
+        tool-callback-converter: true  # Enable Spring AI ToolCallback conversion
+        capabilities:
+          tool: true
+          resource: true
+          prompt: false
+          completion: false
+        stateless:
+          mcp-endpoint: /mcp  # Custom MCP endpoint
+          disallow-delete: false
+        request-timeout: 30s
+
+# All JWT validation and client authorization now managed via database and MCP server frontend
+# No static configuration needed - everything is dynamic and UI-configurable
+
+# Multi-tenant Configuration
+multitenancy:
+  enabled: true
+  default-tenant: default
+  tenant-header: X-Tenant-ID
+  tenant-claim: tenant_id
+
+# Local JWT: 5-minute access tokens. PaperIQ hub token is re-introspected on each refresh.
+jwt:
+  expiration: ${JWT_EXPIRATION:300000}
+
+# Security Configuration
+security:
+  auth:
+    local-registration-enabled: ${LOCAL_REGISTRATION_ENABLED:false}
+    local-password-login-enabled: ${LOCAL_PASSWORD_LOGIN_ENABLED:false}
+  mcp:
+    enabled: true
+    require-authentication: true
+    allowed-clients: ${MCP_ALLOWED_CLIENTS:llm-ocr-main}
+  admin-sso:
+    token-endpoint: ${ADMIN_SSO_TOKEN_ENDPOINT:http://localhost:8080/api/mcp/admin-sso/token}
+    client-id: ${ADMIN_SSO_CLIENT_ID:}
+    client-secret: ${ADMIN_SSO_CLIENT_SECRET:}
+  jwt:
+    # Default introspection endpoint for JWT validation (local development)
+    introspection-endpoint: ${JWT_INTROSPECTION_ENDPOINT:http://localhost:8080/api/jwt/validate}
+    # Allow both legacy and current public MCP audiences.
+    allowed-audiences: ${JWT_ALLOWED_AUDIENCES:https://paperiq.ai/invoice,https://paperiq.ai/mcp-invoice,https://eyesense.ai/invoice,https://eyesense.ai/mcp-invoice}
+
+# Logging
+logging:
+  level:
+    com.llmocr.mcp.invoice: DEBUG
+    org.springframework.security: INFO
+    liquibase: INFO
+    org.springframework.ai.mcp: DEBUG
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,mcp
+  endpoint:
+    health:
+      show-details: always
+    mcp:
+      enabled: true
+  health:
+    mail:
+      enabled: true  # Disable until SendGrid is properly configured
+
+# Invoice Processing Configuration
+invoice:
+  processing:
+    max-file-size: 10MB
+    supported-formats: pdf,png,jpg,jpeg
+    duplicate-check:
+      enabled: true
+      fields: invoiceNumber,vendorName,totalAmount
+    validation:
+      required-fields: invoiceNumber,vendorName,totalAmount,invoiceDate
+      amount-precision: 2
+
+# Application Configuration
+app:
+  base-url: ${APP_BASE_URL:http://localhost:13002}  # Frontend URL for password reset links
+  email:
+    from: ${EMAIL_FROM:noreply@eyesense.ai}  # Sender email (must be verified in SendGrid)
+
+# LLM JSON Processing Configuration
+llm-ocr:
+  json:
+    auto-correct:
+      # Enable auto-correction of common JSON issues from LLM output
+      # Fixes: trailing commas, comments, quote issues, missing commas, etc.
+      enabled: ${JSON_AUTO_CORRECT_ENABLED:true}
+      # Log what corrections were made (useful for debugging)
+      log-corrections: ${JSON_AUTO_CORRECT_LOG:true}
+
+# S3/MinIO Configuration
+# Default settings for running invoice server in IDE with Docker Compose services
+s3:
+  # Public endpoint for browser access to presigned URLs
+  # Local IDE + Docker Compose: http://localhost:19000 (host-exposed port)
+  # For production: override via S3_PUBLIC_ENDPOINT env var
+  public-endpoint: ${S3_PUBLIC_ENDPOINT:http://localhost:19000}
+  
+  # Default server endpoint for S3/MinIO (used when creating new bucket configurations)
+  # Local IDE + Docker Compose: http://localhost:19000 (host-exposed port from docker-compose.yml)
+  # When running IN Docker: use http://minio:9000 (internal service name)
+  # For production: override via S3_DEFAULT_ENDPOINT env var
+  default-endpoint: ${S3_DEFAULT_ENDPOINT:http://localhost:19000}
+  
+  # Default MinIO credentials for new bucket configurations
+  # These are auto-populated when creating new S3 bucket configs in the admin UI
+  default-access-key: ${S3_DEFAULT_ACCESS_KEY:minioadmin}
+  default-secret-key: ${S3_DEFAULT_SECRET_KEY:minioadmin}
+
+# CORS Configuration
+cors:
+  allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:8080,http://localhost:13002}
+
+# LLMOCR Main App Integration
+# This enables MCP Invoice Server to query LLMOCR for tenant S3 bucket configurations
+llmocr:
+  api:
+    base-url: ${LLMOCR_API_URL:http://localhost:8080}
+    context-path: ${LLMOCR_CONTEXT_PATH:/api}

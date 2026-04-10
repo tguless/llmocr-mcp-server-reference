@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00028-populate-admin-categories" author="mcp-invoice-server">
+        <comment>Populate admin tenant with all existing category definitions</comment>
+        
+        <!-- Pass-Through: Energy Generation -->
+        <insert tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="category_code" value="PASS_THROUGH_ENERGY"/>
+            <column name="category_name" value="Pass-Through: Energy Generation"/>
+            <column name="description" value="Direct energy generation costs passed to customers"/>
+            <column name="is_pass_through" valueBoolean="true"/>
+            <column name="is_credit" valueBoolean="false"/>
+            <column name="is_billable" valueBoolean="true"/>
+            <column name="display_order" value="1"/>
+            <column name="created_by" value="system"/>
+        </insert>
+
+        <!-- Pass-Through: Demand Charges -->
+        <insert tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="category_code" value="PASS_THROUGH_DEMAND"/>
+            <column name="category_name" value="Pass-Through: Demand Charges"/>
+            <column name="description" value="Peak demand charges passed to customers"/>
+            <column name="is_pass_through" valueBoolean="true"/>
+            <column name="is_credit" valueBoolean="false"/>
+            <column name="is_billable" valueBoolean="true"/>
+            <column name="display_order" value="2"/>
+            <column name="created_by" value="system"/>
+        </insert>
+
+        <!-- Pass-Through: Fuel Adjustment -->
+        <insert tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="category_code" value="PASS_THROUGH_FUEL"/>
+            <column name="category_name" value="Pass-Through: Fuel Adjustment"/>
+            <column name="description" value="Fuel cost adjustments passed to customers"/>
+            <column name="is_pass_through" valueBoolean="true"/>
+            <column name="is_credit" valueBoolean="false"/>
+            <column name="is_billable" valueBoolean="true"/>
+            <column name="display_order" value="3"/>
+            <column name="created_by" value="system"/>
+        </insert>
+
+        <!-- Pass-Through: Transmission -->
+        <insert tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="category_code" value="PASS_THROUGH_TRANSMISSION"/>
+            <column name="category_name" value="Pass-Through: Transmission"/>
+            <column name="description" value="Transmission service costs passed to customers"/>
+            <column name="is_pass_through" valueBoolean="true"/>
+            <column name="is_credit" valueBoolean="false"/>
+            <column name="is_billable" valueBoolean="true"/>
+            <column name="display_order" value="4"/>
+            <column name="created_by" value="system"/>
+        </insert>
+
+        <!-- Pass-Through: Environmental -->
+        <insert tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="category_code" value="PASS_THROUGH_ENVIRONMENTAL"/>
+            <column name="category_name" value="Pass-Through: Environmental"/>
+            <column name="description" value="Environmental and regulatory costs passed to customers"/>
+            <column name="is_pass_through" valueBoolean="true"/>
+            <column name="is_credit" valueBoolean="false"/>
+            <column name="is_billable" valueBoolean="true"/>
+            <column name="display_order" value="5"/>
+            <column name="created_by" value="system"/>
+        </insert>
+
+        <!-- Pass-Through: Other -->
+        <insert tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="category_code" value="PASS_THROUGH_OTHER"/>
+            <column name="category_name" value="Pass-Through: Other"/>
+            <column name="description" value="Other pass-through costs"/>
+            <column name="is_pass_through" valueBoolean="true"/>
+            <column name="is_credit" valueBoolean="false"/>
+            <column name="is_billable" valueBoolean="true"/>
+            <column name="display_order" value="6"/>
+            <column name="created_by" value="system"/>
+        </insert>
+
+        <!-- Credit: Generation -->
+        <insert tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="category_code" value="CREDIT_GENERATION"/>
+            <column name="category_name" value="Credit: Generation"/>
+            <column name="description" value="Credits from energy generation (reduce costs)"/>
+            <column name="is_pass_through" valueBoolean="true"/>
+            <column name="is_credit" valueBoolean="true"/>
+            <column name="is_billable" valueBoolean="true"/>
+            <column name="display_order" value="7"/>
+            <column name="created_by" value="system"/>
+        </insert>
+
+        <!-- Credit: Rebate -->
+        <insert tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="category_code" value="CREDIT_REBATE"/>
+            <column name="category_name" value="Credit: Rebate"/>
+            <column name="description" value="Rebates and credits reducing customer bills"/>
+            <column name="is_pass_through" valueBoolean="true"/>
+            <column name="is_credit" valueBoolean="true"/>
+            <column name="is_billable" valueBoolean="true"/>
+            <column name="display_order" value="8"/>
+            <column name="created_by" value="system"/>
+        </insert>
+
+        <!-- Internal: Administrative -->
+        <insert tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="category_code" value="INTERNAL_ADMIN"/>
+            <column name="category_name" value="Internal: Administrative"/>
+            <column name="description" value="Internal administrative costs (not passed to customers)"/>
+            <column name="is_pass_through" valueBoolean="false"/>
+            <column name="is_credit" valueBoolean="false"/>
+            <column name="is_billable" valueBoolean="false"/>
+            <column name="display_order" value="9"/>
+            <column name="created_by" value="system"/>
+        </insert>
+
+        <!-- Internal: Fees -->
+        <insert tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="category_code" value="INTERNAL_FEE"/>
+            <column name="category_name" value="Internal: Fees"/>
+            <column name="description" value="Internal fees and charges (not passed to customers)"/>
+            <column name="is_pass_through" valueBoolean="false"/>
+            <column name="is_credit" valueBoolean="false"/>
+            <column name="is_billable" valueBoolean="false"/>
+            <column name="display_order" value="10"/>
+            <column name="created_by" value="system"/>
+        </insert>
+
+        <!-- Internal: Taxes -->
+        <insert tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="category_code" value="INTERNAL_TAX"/>
+            <column name="category_name" value="Internal: Taxes"/>
+            <column name="description" value="Taxes paid by the energy company (not passed to customers)"/>
+            <column name="is_pass_through" valueBoolean="false"/>
+            <column name="is_credit" valueBoolean="false"/>
+            <column name="is_billable" valueBoolean="false"/>
+            <column name="display_order" value="11"/>
+            <column name="created_by" value="system"/>
+        </insert>
+
+        <!-- Internal: Other -->
+        <insert tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="category_code" value="INTERNAL_OTHER"/>
+            <column name="category_name" value="Internal: Other"/>
+            <column name="description" value="Other internal costs"/>
+            <column name="is_pass_through" valueBoolean="false"/>
+            <column name="is_credit" valueBoolean="false"/>
+            <column name="is_billable" valueBoolean="false"/>
+            <column name="display_order" value="12"/>
+            <column name="created_by" value="system"/>
+        </insert>
+
+        <!-- Requires Review -->
+        <insert tableName="categories" schemaName="mcp_invoice">
+            <column name="tenant_id" value="admin"/>
+            <column name="category_code" value="REVIEW_REQUIRED"/>
+            <column name="category_name" value="Requires Review"/>
+            <column name="description" value="Items requiring manual review and categorization"/>
+            <column name="is_pass_through" valueBoolean="false"/>
+            <column name="is_credit" valueBoolean="false"/>
+            <column name="is_billable" valueBoolean="false"/>
+            <column name="display_order" value="99"/>
+            <column name="created_by" value="system"/>
+        </insert>
+
+    </changeSet>
+
+</databaseChangeLog>
+

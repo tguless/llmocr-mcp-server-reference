@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00017-create-vendors-table" author="mcp-invoice-server">
+        <comment>Create vendors table for vendor/supplier management</comment>
+        
+        <createTable tableName="vendors" schemaName="mcp_invoice">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vendor_name" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vendor_code" type="VARCHAR(50)"/>
+            <column name="tax_id" type="VARCHAR(50)"/>
+            <column name="address" type="TEXT"/>
+            <column name="city" type="VARCHAR(100)"/>
+            <column name="state" type="VARCHAR(100)"/>
+            <column name="postal_code" type="VARCHAR(20)"/>
+            <column name="country" type="VARCHAR(100)"/>
+            <column name="phone" type="VARCHAR(50)"/>
+            <column name="email" type="VARCHAR(255)"/>
+            <column name="website" type="VARCHAR(500)"/>
+            <column name="contact_person" type="VARCHAR(200)"/>
+            <column name="payment_terms" type="VARCHAR(100)"/>
+            <column name="category" type="VARCHAR(100)"/>
+            <column name="notes" type="TEXT"/>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+        </createTable>
+
+        <addUniqueConstraint 
+            tableName="vendors" 
+            schemaName="mcp_invoice"
+            columnNames="tenant_id, vendor_name" 
+            constraintName="uk_vendors_tenant_name"/>
+
+        <createIndex indexName="idx_vendors_tenant_id" tableName="vendors" schemaName="mcp_invoice">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vendors_vendor_name" tableName="vendors" schemaName="mcp_invoice">
+            <column name="vendor_name"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vendors_vendor_code" tableName="vendors" schemaName="mcp_invoice">
+            <column name="vendor_code"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vendors_tax_id" tableName="vendors" schemaName="mcp_invoice">
+            <column name="tax_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vendors_active" tableName="vendors" schemaName="mcp_invoice">
+            <column name="active"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vendors_category" tableName="vendors" schemaName="mcp_invoice">
+            <column name="category"/>
+        </createIndex>
+
+        <createIndex indexName="idx_vendors_created_at" tableName="vendors" schemaName="mcp_invoice">
+            <column name="created_at"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
+
+
+

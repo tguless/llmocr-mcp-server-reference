@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="00014-create-category-corrections-table" author="dev-team">
+        <comment>Track user corrections for ML training</comment>
+        
+        <createTable tableName="category_corrections" schemaName="mcp_invoice">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="line_item_id" type="BIGINT">
+                <constraints nullable="false" 
+                            foreignKeyName="fk_corrections_line_item"
+                            references="mcp_invoice.invoice_line_items(id)"
+                            deleteCascade="true"/>
+            </column>
+            
+            <column name="original_category" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="original_confidence" type="DECIMAL(5,4)">
+                <constraints nullable="true"/>
+            </column>
+            
+            <column name="corrected_category" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="correction_reason" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            
+            <column name="line_item_description" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            
+            <column name="line_item_amount" type="DECIMAL(15,2)">
+                <constraints nullable="true"/>
+            </column>
+            
+            <column name="corrected_by" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="corrected_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <!-- Indexes -->
+        <createIndex tableName="category_corrections" schemaName="mcp_invoice" 
+                     indexName="idx_corrections_tenant">
+            <column name="tenant_id"/>
+        </createIndex>
+        
+        <createIndex tableName="category_corrections" schemaName="mcp_invoice" 
+                     indexName="idx_corrections_line_item">
+            <column name="line_item_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+
