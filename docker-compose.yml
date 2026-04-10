@@ -70,7 +70,8 @@ services:
       APP_BASE_URL: http://localhost:13002
       CORS_ORIGINS: http://localhost:13002,http://localhost:3000
       SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
-      # SSO settings - configure these to connect to your PaperIQ hub
+      # SSO: same client ID + secret as PaperIQ Global Admin → Platform MCP SSO (Invoice + Resume share one pair)
+      # See README "PaperIQ hub: platform MCP SSO"
       ADMIN_SSO_TOKEN_ENDPOINT: ${ADMIN_SSO_TOKEN_ENDPOINT:-}
       ADMIN_SSO_CLIENT_ID: ${ADMIN_SSO_CLIENT_ID:-}
       ADMIN_SSO_CLIENT_SECRET: ${ADMIN_SSO_CLIENT_SECRET:-}

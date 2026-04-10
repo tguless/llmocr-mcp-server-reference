@@ -167,9 +167,10 @@ mcp_invoice schema:
 ### Docker Deployment
 
 ```bash
-# From parent directory
-docker-compose up mcp-invoice-server
+docker compose up -d
 ```
+
+See `docker-compose.yml` for ports (e.g. MCP server `18081`, admin UI `13002`, Postgres `15432`, MinIO `19000`).
 
 ## ⚙️ Configuration
 
@@ -216,6 +217,9 @@ jwt:
 | `DB_PASSWORD` | Database password | `mcp_invoice_password` |
 | `JWT_SECRET` | JWT signing secret | Auto-generated secure key |
 | `CORS_ORIGINS` | Allowed CORS origins | `http://localhost:8080` |
+| `ADMIN_SSO_TOKEN_ENDPOINT` | PaperIQ hub token endpoint (SSO) | See `application-docker.yml` |
+| `ADMIN_SSO_CLIENT_ID` | OAuth client ID (must match PaperIQ Platform MCP SSO) | — |
+| `ADMIN_SSO_CLIENT_SECRET` | OAuth client secret (must match PaperIQ) | — |
 
 ## 🔒 Security Features
 
@@ -295,6 +299,34 @@ curl -X POST http://localhost:8081/mcp-invoice/mcp/tools/call \
 - Audit trail correlation
 
 ## 🔄 Integration with Main Application
+
+### PaperIQ hub: platform MCP SSO (Invoice and Resume)
+
+When this MCP server is registered in **PaperIQ** as a **platform-managed** integration (hosted Invoice / Resume MCP), the hub stores **one shared** OAuth **client ID** and **client secret** for **all** such MCP rows—both the **Invoice** and **Resume** MCP servers use the **same** pair. Your deployment must use matching values in environment variables (see below).
+
+**Configure credentials in PaperIQ (global admin)**
+
+- In the PaperIQ app: **Global Admin → Platform MCP SSO**
+  - View the current **client ID**
+  - **Generate or rotate** to create a new random ID and secret (secret shown once), or
+  - **Set credentials manually** to paste an ID and secret you already use (e.g. after rotating in AWS Secrets Manager)
+
+**API (optional)**
+
+- `PUT /api/global-admin/platform-sso-credentials` — set explicit `ssoClientId` and `ssoClientSecret` (authenticated global admin)
+- `POST /api/global-admin/platform-sso-credentials` — rotate to new random credentials
+
+**This repository (MCP Invoice)**
+
+Set these so token exchange with the hub matches what PaperIQ stores:
+
+| Variable | Purpose |
+|----------|---------|
+| `ADMIN_SSO_TOKEN_ENDPOINT` | PaperIQ token URL (e.g. `https://<host>/api/mcp/admin-sso/token`) |
+| `ADMIN_SSO_CLIENT_ID` | Same client ID as in Platform MCP SSO |
+| `ADMIN_SSO_CLIENT_SECRET` | Same plaintext secret (stored hashed in PaperIQ) |
+
+The **Resume** MCP server (separate codebase) uses the same hub mechanism and the **same** platform client ID/secret when both are platform-managed.
 
 ### MCP Client Configuration
 
